@@ -1,0 +1,2 @@
+#pragma once
+inline constexpr char shaderSource[]=R"FOV_HLSL(@FOV_SHADER@)FOV_HLSL";
