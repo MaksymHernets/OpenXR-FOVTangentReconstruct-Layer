@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.3
+
+- Added the application icon from `Neon VR Focus Grid.png` for the executable, application windows, and taskbar.
+- Embedded multiple Windows icon sizes and the original PNG so the icon works without separate image files.
+- Added Windows executable version metadata for 0.1.3.
+
 ## 0.1.2
 
 - Edge Fill now shows only parameters used by the selected algorithm, including only the color picker for Solid Color and only the reconstruction block for Temporal Depth Reconstruction. Hidden values are preserved when switching algorithms.

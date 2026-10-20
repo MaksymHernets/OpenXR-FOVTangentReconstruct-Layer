@@ -3,11 +3,13 @@
 #include <QTimer>
 #include <QTabWidget>
 #include <QDir>
+#include <QIcon>
 int main(int argc, char **argv) {
     QApplication app(argc, argv);
     app.setApplicationName("OpenXR FOV Manager");
     app.setApplicationVersion(FOV_VERSION);
     app.setOrganizationName("OpenXRFovExtension");
+    app.setWindowIcon(QIcon(":/icons/Neon VR Focus Grid.png"));
     MainWindow w;
     w.show();
     auto args = app.arguments();
@@ -17,7 +19,7 @@ int main(int argc, char **argv) {
         QTimer::singleShot(100, &app, [&app, &w, path]() {
             QDir().mkpath(path);
             auto tabs = w.findChild<QTabWidget *>();
-            bool ok = tabs != nullptr;
+            bool ok = tabs != nullptr && !w.windowIcon().isNull();
             if (tabs)
                 for (int i = 0; i < tabs->count(); i++) {
                     tabs->setCurrentIndex(i);

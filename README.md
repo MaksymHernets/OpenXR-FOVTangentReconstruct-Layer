@@ -1,6 +1,6 @@
 # OpenXR FOV Extension
 
-Version **0.1.2**. Windows x64 implicit OpenXR API layer and Qt 6 **OpenXR FOV Manager**. The layer narrows each eye's projection in tangent space, recommends smaller render dimensions, and reconstructs the original projection using a separate runtime-owned output swapchain. Clamp, Gradient, Blur, Mirror, Solid Color, and **Temporal Depth Reconstruction** are implemented as GPU shaders for D3D11 and D3D12.
+Version **0.1.3**. Windows x64 implicit OpenXR API layer and Qt 6 **OpenXR FOV Manager**. The layer narrows each eye's projection in tangent space, recommends smaller render dimensions, and reconstructs the original projection using a separate runtime-owned output swapchain. Clamp, Gradient, Blur, Mirror, Solid Color, and **Temporal Depth Reconstruction** are implemented as GPU shaders for D3D11 and D3D12.
 
 This is an initial implementation with local GPU and dispatch tests. **Quest 3 visual validation, VDXR session testing, performance measurements, and long-running game compatibility testing remain required.** See [testing](docs/TESTING.md) and [design and limitations](docs/DESIGN.md). Do not interpret a successful build as headset certification.
 
