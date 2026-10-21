@@ -14,9 +14,9 @@ struct alignas(16) VulkanParameters {
     int32_t destination[4];
     uint32_t outputFlags[4];
 };
-static_assert(sizeof(VulkanParameters) == 848);
-static_assert(offsetof(VulkanParameters, temporal) == 96);
-static_assert(offsetof(VulkanParameters, destination) == 816);
+static_assert(sizeof(VulkanParameters) == 896);
+static_assert(offsetof(VulkanParameters, temporal) == 144);
+static_assert(offsetof(VulkanParameters, destination) == 864);
 } // namespace
 class VulkanEdgeRenderer final : public IEdgeRenderer {
     VulkanContext vk;

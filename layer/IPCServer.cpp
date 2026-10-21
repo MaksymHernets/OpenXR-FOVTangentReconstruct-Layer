@@ -2,6 +2,7 @@
 #include "IPCServer.h"
 #include <chrono>
 #include <fstream>
+#include <array>
 namespace fov {
 IPCServer::IPCServer(std::string executable, std::string application)
     : path(std::move(executable)), app(std::move(application)) {
@@ -24,11 +25,17 @@ void IPCServer::run(std::stop_token stop) {
     static std::atomic<bool> processRecorded = false;
     auto pipeName = L"\\\\.\\pipe\\OpenXRFovExtension-" + std::to_wstring(GetCurrentProcessId()) + L"-" +
                     std::to_wstring(reinterpret_cast<uintptr_t>(this));
-    HANDLE pipe =
-        CreateNamedPipeW(pipeName.c_str(), PIPE_ACCESS_OUTBOUND,
-                         PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT | PIPE_REJECT_REMOTE_CLIENTS, 1,
-                         65536, 0, 0, nullptr);
-    bool connected = false, recorded = false;
+    struct Client {
+        HANDLE pipe = INVALID_HANDLE_VALUE;
+        bool connected = false;
+    };
+    std::array<Client, 4> clients;
+    for (auto &client : clients)
+        client.pipe =
+            CreateNamedPipeW(pipeName.c_str(), PIPE_ACCESS_OUTBOUND,
+                             PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT | PIPE_REJECT_REMOTE_CLIENTS,
+                             UINT(clients.size()), 65536, 0, 0, nullptr);
+    bool recorded = false;
     std::string lastApi, lastStatus, lastError, lastFFR;
     while (!stop.stop_requested()) {
         try {
@@ -55,6 +62,13 @@ void IPCServer::run(std::stop_token stop) {
             auto status = j.value("status", ""), errorMessage = j.value("lastError", "");
             auto ffr = j.value("ffr", Json::object());
             ffr.erase("displayTime");
+            if (ffr.contains("automaticScene")) {
+                auto automatic = ffr["automaticScene"];
+                ffr["automaticScene"] = {
+                    {"installed", automatic.value("installed", false)},
+                    {"executionObserved", automatic.value("executionConfirmedByFence", false)},
+                    {"reason", automatic.value("reason", std::string{})}};
+            }
             auto ffrText = ffr.empty() ? std::string{} : ffr.dump();
             if (profile().logging &&
                 (status != lastStatus || errorMessage != lastError || ffrText != lastFFR)) {
@@ -75,18 +89,23 @@ void IPCServer::run(std::stop_token stop) {
                             << " Effective FOV Scale: " << eye["effectiveScale"].dump()
                             << " Mode: " << eye.value("mode", "")
                             << " Zone 1: Full Quality; Zone 2: Reduced Quality; "
-                            << (eye.value("renderedZones", 3) == 3
-                                    ? "Zone 3: Rendered Outer"
-                                    : "Cropped Region: Existing Reconstruction")
+                            << "Outside: " << eye.value("outsideRegion", "unknown")
+                            << "; Outside scene suppression: unsupported, scene savings 0%; "
                             << " Reconstruction Mode: " << ffr.value("reconstructionMode", "")
                             << " Shading Rate Backend: " << ffr.value("capabilities", Json::object()).dump()
-                            << " Applied Shading Rates: unconfirmed; configured map only\n";
+                            << " Applied Shading Rates: pixel frequency not sampled in game; "
+                            << "Automatic execution evidence: "
+                            << ffr.value("automaticScene", Json::object()).dump() << "\n";
                     }
             }
             lastFFR = ffrText;
             lastStatus = status;
             lastError = errorMessage;
-            if (pipe != INVALID_HANDLE_VALUE) {
+            for (auto &client : clients) {
+                auto pipe = client.pipe;
+                auto &connected = client.connected;
+                if (pipe == INVALID_HANDLE_VALUE)
+                    continue;
                 if (!connected) {
                     BOOL c = ConnectNamedPipe(pipe, nullptr);
                     auto e = GetLastError();
@@ -108,9 +127,10 @@ void IPCServer::run(std::stop_token stop) {
         for (int i = 0; i < 10 && !stop.stop_requested(); i++)
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
-    if (pipe != INVALID_HANDLE_VALUE) {
-        DisconnectNamedPipe(pipe);
-        CloseHandle(pipe);
-    }
+    for (auto &client : clients)
+        if (client.pipe != INVALID_HANDLE_VALUE) {
+            DisconnectNamedPipe(client.pipe);
+            CloseHandle(client.pipe);
+        }
 }
 } // namespace fov

@@ -59,6 +59,9 @@ static void math() {
     require(std::abs(center * s[0] + b[0] - reducedCenter) < 1e-5f, "Asymmetric optical center");
 }
 using Pixels = std::vector<uint32_t>;
+static bool fullMaskMode = false;
+static int debugView = 0;
+static bool rectangleMask = false;
 static ShaderConstants settings(int method, DXGI_FORMAT format) {
     ShaderConstants c{};
     c.scale[0] = 1.5f;
@@ -78,6 +81,21 @@ static ShaderConstants settings(int method, DXGI_FORMAT format) {
     c.blurRadius = 3;
     c.blurStrength = .5f;
     c.edgeSamples = 8;
+    if (fullMaskMode) {
+        c.scale[0] = c.scale[1] = 1;
+        c.bias[0] = c.bias[1] = 0;
+        c.outsideMask[0] = c.outsideMask[1] = .5f;
+        c.outsideMask[2] = .36f;
+        c.outsideMask[3] = .32f;
+        c.outsidePolicy[0] = rectangleMask ? 2.f : 1.f;
+        c.outsidePolicy[1] = float(debugView);
+        c.outsidePolicy[3] = 1;
+        c.centerMask[0] = c.centerMask[1] = .15f;
+        c.centerMask[3] = rectangleMask ? 2.f : 1.f;
+        c.method = method;
+        profile.color = {.25f, .5f, .75f};
+        setFillColor(c, profile, format);
+    }
     return c;
 }
 static Pixels sourcePixels() {
@@ -90,6 +108,22 @@ static Pixels sourcePixels() {
     return p;
 }
 static void inspect(const Pixels &p, int method) {
+    if (fullMaskMode) {
+        for (auto pixel : p)
+            require((pixel >> 24) == 255, "Full mask opaque coverage");
+        if (debugView == 0) {
+            require((p.front() & 0xffffff) != 0, "Full FOV selected algorithm fills Outside");
+            if (method != 4)
+                require((p.front() & 255) > 10 && ((p.front() >> 8) & 255) > 10,
+                        "Outside samples valid inner observations");
+        }
+        if (debugView == 3)
+            require(p.front() == 0xffff00ff && p[16 * 32 + 16] == 0xff000000,
+                    "Independent Outside mask view");
+        if (debugView == 4)
+            require(p.front() == 0xff000000, "Full mask is not a projection crop");
+        return;
+    }
     for (size_t i = 0; i < p.size(); i++) {
         auto v = p[i];
         require((v >> 24) == 255, "GPU output alpha");
@@ -114,6 +148,8 @@ static std::array<Pixels, 6> d3d11(DXGI_FORMAT format) {
                             nullptr, &ctx));
     auto renderer = makeD3D11(d.Get());
     renderer->setTiming(true);
+    if (fullMaskMode)
+        renderer->setTemporal({});
     D3D11_VIEWPORT originalViewport{3, 4, 19, 20, 0, 1};
     ctx->RSSetViewports(1, &originalViewport);
     ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
@@ -157,13 +193,16 @@ static std::array<Pixels, 6> d3d11(DXGI_FORMAT format) {
             memcpy(r.data() + y * 32, (BYTE *)mapped.pData + y * mapped.RowPitch, 128);
         ctx->Unmap(read.Get(), 1);
         inspect(r, m);
-        if (m >= 4)
+        if (fullMaskMode && !debugView) {
+            require(r[16 * 32 + 16] == results[0][16 * 32 + 16], "All mask algorithms preserve Center");
+        }
+        if (!fullMaskMode && m >= 4)
             for (size_t i = 0; i < r.size(); i++) {
                 float x = ((i % 32) + .5f) / 32 * 1.5f - .3f, y = ((i / 32) + .5f) / 32 * 1.4f - .1f;
                 if (x >= 0 && x <= 1 && y >= 0 && y <= 1)
                     require(r[i] == results[0][i], "Solid fill preserves original center pixels");
             }
-        if (m == 0)
+        if (!fullMaskMode && m == 0)
             require((r.front() & 0xffff) == 0, "Clamp corner uses nearest boundary pixel");
     }
     require(renderer->gpuMilliseconds().has_value(), "D3D11 timestamp measurement");
@@ -182,6 +221,8 @@ static void d3d12(const std::array<Pixels, 6> &reference, DXGI_FORMAT format) {
     check(d->CreateCommandQueue(&qd, IID_PPV_ARGS(&q)));
     auto renderer = makeD3D12(d.Get(), q.Get());
     renderer->setTiming(true);
+    if (fullMaskMode)
+        renderer->setTemporal({});
     ComPtr<ID3D12CommandAllocator> allocator;
     ComPtr<ID3D12GraphicsCommandList> list;
     check(d->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&allocator)));
@@ -302,7 +343,21 @@ int main() {
             auto reference = d3d11(format);
             d3d12(reference, format);
         }
-        std::cout << "PASS: configuration, concurrency, asymmetric FOV, all five algorithms on D3D11 and "
+        fullMaskMode = true;
+        for (auto format : {DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB}) {
+            for (bool rectangle : {false, true}) {
+                rectangleMask = rectangle;
+                auto reference = d3d11(format);
+                d3d12(reference, format);
+            }
+        }
+        for (int view : {3, 4, 5, 6, 7}) {
+            debugView = view;
+            auto reference = d3d11(DXGI_FORMAT_R8G8B8A8_UNORM);
+            d3d12(reference, DXGI_FORMAT_R8G8B8A8_UNORM);
+        }
+        std::cout << "PASS: full-FOV elliptical/rectangular masks, all six algorithms, debug views, "
+                     "configuration, concurrency, asymmetric FOV, all five algorithms on D3D11 and "
                      "D3D12 WARP, pixel parity\n";
         return 0;
     } catch (const std::exception &e) {

@@ -7,7 +7,12 @@
 #include <chrono>
 #include <bit>
 using namespace fov;
-using vkTest::require;
+static void require(bool condition, const char *message) {
+    if (!condition) {
+        std::cerr << "Assertion: " << message << "\n";
+        throw std::runtime_error(message);
+    }
+}
 namespace runtime {
 struct Chain {
     XrSwapchainCreateInfo info{};
@@ -18,7 +23,7 @@ struct Chain {
 std::map<XrSwapchain, Chain> chains;
 std::unique_ptr<vkTest::Device> device;
 uintptr_t next = 100;
-bool timeout = false, expectOutput = false, temporal = false, checkPixels = true;
+bool timeout = false, expectOutput = false, temporal = false, checkPixels = true, fullMask = false;
 XrCompositionLayerProjectionView expected[2]{};
 uint32_t wantedColor[2]{};
 int calls = 0, spacesCreated = 0, spacesDestroyed = 0;
@@ -193,7 +198,14 @@ XrResult XRAPI_CALL end(XrSession, const XrFrameEndInfo *info) {
             if (!temporal) {
                 size_t corner = size_t(v.subImage.imageArrayIndex) * im.width * im.height +
                                 size_t(r.offset.y) * im.width + r.offset.x;
-                require(pixels[corner] == 0xff000000, "solid peripheral output is black");
+                uint32_t expectedColor = fullMask ? 0xffbf8040 : 0xff000000;
+                for (int channel = 0; channel < 4; ++channel)
+                    if (std::abs(int((pixels[corner] >> (channel * 8)) & 255) -
+                                 int((expectedColor >> (channel * 8)) & 255)) > 1) {
+                        std::cerr << "Outside color: actual=" << std::hex << pixels[corner]
+                                  << " expected=" << expectedColor << std::dec << "\n";
+                        require(false, "Solid peripheral output matches configured color");
+                    }
             }
             vkTest::ppm(std::filesystem::current_path() / "vulkan-evidence" /
                             ("openxr-" + evidenceName + "-" + std::to_string(calls) + "-eye" +
@@ -217,13 +229,14 @@ XrResult XRAPI_CALL gipa(XrInstance, const char *name, PFN_xrVoidFunction *out) 
     MAP(LocateViews, locate)
     MAP(CreateSwapchain, createSwapchain)
     MAP(DestroySwapchain, destroySwapchain)
-    MAP(EnumerateSwapchainImages, enumerateImages) MAP(AcquireSwapchainImage, acquire)
-        MAP(WaitSwapchainImage, wait) MAP(ReleaseSwapchainImage, release) MAP(EndFrame, end)
-            MAP(BeginSession, beginSession) MAP(EndSession, endSession) MAP(PollEvent, pollEvent)
-                MAP(CreateReferenceSpace, createSpace) MAP(LocateSpace, locateSpace)
-                    MAP(DestroySpace, destroySpace)
+    MAP(EnumerateSwapchainImages, enumerateImages)
+    MAP(AcquireSwapchainImage, acquire)
+    MAP(WaitSwapchainImage, wait) MAP(ReleaseSwapchainImage, release) MAP(EndFrame, end)
+        MAP(BeginSession, beginSession) MAP(EndSession, endSession) MAP(PollEvent, pollEvent)
+            MAP(CreateReferenceSpace, createSpace) MAP(LocateSpace, locateSpace)
+                MAP(DestroySpace, destroySpace)
 #undef MAP
-                        *out = nullptr;
+                    *out = nullptr;
     return XR_ERROR_FUNCTION_UNSUPPORTED;
 }
 } // namespace runtime
@@ -232,6 +245,21 @@ template <class T> T proc(PFN_xrGetInstanceProcAddr g, XrInstance instance, cons
     require(XR_SUCCEEDED(g(instance, name, reinterpret_cast<PFN_xrVoidFunction *>(&result))), name);
     return result;
 }
+struct LayerCleanup {
+    HMODULE module{};
+    XrInstance instance{};
+    PFN_xrGetInstanceProcAddr g{};
+    ~LayerCleanup() {
+        if (instance && g) {
+            try {
+                proc<PFN_xrDestroyInstance>(g, instance, "xrDestroyInstance")(instance);
+            } catch (...) {
+            }
+        }
+        if (module)
+            FreeLibrary(module);
+    }
+};
 int wmain(int argc, wchar_t **argv) {
     try {
         require(argc >= 2, "layer DLL path required");
@@ -241,13 +269,16 @@ int wmain(int argc, wchar_t **argv) {
             packed |= !wcscmp(argv[i], L"--packed");
             vulkan2 |= !wcscmp(argv[i], L"--vulkan2");
             runtime::temporal |= !wcscmp(argv[i], L"--temporal");
+            runtime::fullMask |= !wcscmp(argv[i], L"--full-mask");
             mixed |= !wcscmp(argv[i], L"--mixed");
         }
-        runtime::evidenceName = (runtime::temporal ? "depth-" : "") + std::string(separate  ? "separate"
-                                                                                  : packed  ? "packed"
-                                                                                  : mixed   ? "mixed"
-                                                                                  : vulkan2 ? "enable2"
-                                                                                            : "array");
+        runtime::evidenceName = std::string(runtime::fullMask ? "full-mask-" : "") +
+                                (runtime::temporal ? "depth-" : "") +
+                                std::string(separate  ? "separate"
+                                            : packed  ? "packed"
+                                            : mixed   ? "mixed"
+                                            : vulkan2 ? "enable2"
+                                                      : "array");
         static_assert(XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR == XR_TYPE_GRAPHICS_BINDING_VULKAN2_KHR);
         static_assert(sizeof(XrSwapchainImageVulkanKHR) == sizeof(XrSwapchainImageVulkan2KHR));
         auto dir = std::filesystem::current_path() / ("test-data-vulkan-" + runtime::evidenceName);
@@ -255,9 +286,15 @@ int wmain(int argc, wchar_t **argv) {
         Profile profile;
         profile.ffr.enabled = true; // Vulkan reconstruction cooperation does not enable scene FFR.
         profile.method = runtime::temporal ? 5 : 4;
+        if (runtime::fullMask) {
+            profile.horizontal = profile.vertical = 1;
+            profile.color = {.25f, .5f, .75f};
+        }
         updateJson(dir / "config.json", [&](Json &j) { j = {{"defaults", profileJson(profile)}}; });
         runtime::device = std::make_unique<vkTest::Device>();
         HMODULE module = LoadLibraryW(argv[1]);
+        LayerCleanup cleanup;
+        cleanup.module = module;
         require(module != nullptr, "load OpenXR layer");
         auto negotiate = reinterpret_cast<PFN_xrNegotiateLoaderApiLayerInterface>(
             GetProcAddress(module, "xrNegotiateLoaderApiLayerInterface"));
@@ -297,6 +334,8 @@ int wmain(int argc, wchar_t **argv) {
         require(XR_SUCCEEDED(request.createApiLayerInstance(&ci, &layer, &instance)),
                 "create Vulkan XR instance");
         auto g = request.getInstanceProcAddr;
+        cleanup.instance = instance;
+        cleanup.g = g;
         auto createSession = proc<PFN_xrCreateSession>(g, instance, "xrCreateSession");
         auto destroySession = proc<PFN_xrDestroySession>(g, instance, "xrDestroySession");
         auto createSwapchain = proc<PFN_xrCreateSwapchain>(g, instance, "xrCreateSwapchain");
@@ -381,7 +420,8 @@ int wmain(int argc, wchar_t **argv) {
             require(XR_SUCCEEDED(enable(session, FOV_VULKAN_COOPERATION_VERSION)),
                     "initialize cooperative Vulkan processing");
             sizes(instance, 1, XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, 2, &count, dimensions);
-            require(dimensions[0].recommendedImageRectWidth == 800, "cooperative Vulkan recommendations");
+            require(dimensions[0].recommendedImageRectWidth == (runtime::fullMask ? 1000u : 800u),
+                    "cooperative Vulkan recommendations");
             XrSwapchain color[2]{}, depth[2]{};
             XrSwapchainCreateInfo sc{XR_TYPE_SWAPCHAIN_CREATE_INFO};
             sc.width = packed ? 64 : 32;
@@ -414,8 +454,9 @@ int wmain(int argc, wchar_t **argv) {
                 li.displayTime = 1000000000 + frameIndex * 11000000;
                 require(XR_SUCCEEDED(locate(session, &li, &state, 2, &count, views)),
                         "locate cooperative Vulkan views");
-                require(same(views[0].fov, reduce(runtime::original[0], .8f, .8f)),
-                        "cooperative Vulkan reduced FOV");
+                require(
+                    same(views[0].fov, reduce(runtime::original[0], profile.horizontal, profile.vertical)),
+                    "cooperative Vulkan reduced FOV");
                 for (int chainIndex = 0; chainIndex < chainCount; chainIndex++)
                     for (int type = 0; type < (runtime::temporal ? 2 : 1); type++) {
                         XrSwapchain handle = type ? depth[chainIndex] : color[chainIndex];
@@ -547,7 +588,9 @@ int wmain(int argc, wchar_t **argv) {
         require(runtime::spacesCreated == runtime::spacesDestroyed, "Vulkan reference spaces released");
         require(XR_SUCCEEDED(proc<PFN_xrDestroyInstance>(g, instance, "xrDestroyInstance")(instance)),
                 "destroy Vulkan XR instance");
+        cleanup.instance = XR_NULL_HANDLE;
         FreeLibrary(module);
+        cleanup.module = nullptr;
         updateJson(std::filesystem::current_path() / "vulkan-evidence" /
                        ("openxr-" + runtime::evidenceName + ".json"),
                    [&](Json &j) {

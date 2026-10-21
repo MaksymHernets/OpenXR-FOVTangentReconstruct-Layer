@@ -141,6 +141,8 @@ Profile parseProfile(const Json &j, Profile p) {
         s.fullMiddleQuality = int(number(*f, "fullMiddleQuality", float(s.fullMiddleQuality), 50, 75));
         s.reducedMiddleQuality =
             int(number(*f, "reducedMiddleQuality", float(s.reducedMiddleQuality), 50, 75));
+        s.debugView = int(number(*f, "debugView", float(s.debugView), 0, 7));
+        s.outsideFallback = int(number(*f, "outsideFallback", float(s.outsideFallback), 0, 1));
         s.outerQuality = int(number(*f, "outerQuality", float(s.outerQuality), 10, 20));
         if (auto v = f->find("geometry");
             v != f->end() && v->is_string() && (*v == "ellipse" || *v == "rectangle"))
@@ -213,6 +215,8 @@ Json profileJson(const Profile &p) {
             {"ffr",
              {{"enabled", p.ffr.enabled},
               {"debug", p.ffr.debug},
+              {"debugView", p.ffr.debugView},
+              {"outsideFallback", p.ffr.outsideFallback},
               {"centerRadiusX", p.ffr.centerX},
               {"centerRadiusY", p.ffr.centerY},
               {"middleRadiusX", p.ffr.middleX},

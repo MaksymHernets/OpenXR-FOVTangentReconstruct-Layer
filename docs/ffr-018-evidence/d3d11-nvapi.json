@@ -1,0 +1,154 @@
+{
+  "capabilities": {
+    "backend": "D3D11 NVIDIA NVAPI VRS",
+    "hardwareSupported": true,
+    "integrationRequired": true,
+    "reason": "Explicit immediate-context scene cooperation required",
+    "sceneIntegrationSupported": true,
+    "supportedRates": [
+      "1x1",
+      "1x2",
+      "2x1",
+      "2x2"
+    ],
+    "tileSize": 16
+  },
+  "cases": [
+    {
+      "effectiveScale": 1.0,
+      "ffr": false,
+      "meanPSInvocations": 262144.0,
+      "meanSceneGpuMs": 0.008086000000000001,
+      "outsideSceneSavings": 0,
+      "recordedPlan": null
+    },
+    {
+      "effectiveScale": 1.0,
+      "ffr": true,
+      "meanPSInvocations": 213760.0,
+      "meanSceneGpuMs": 0.008133999999999997,
+      "outsideSceneSavings": 0,
+      "recordedPlan": {
+        "activeFov": [
+          -0.800000011920929,
+          0.800000011920929,
+          0.800000011920929,
+          -0.800000011920929
+        ],
+        "center": [
+          0.5,
+          0.5
+        ],
+        "centerRadii": [
+          0.20000000298023224,
+          0.20000000298023224
+        ],
+        "cropIsRenderedZone": false,
+        "effectiveScale": [
+          1.0,
+          1.0
+        ],
+        "hardwareApplicationConfirmed": false,
+        "logicalRegions": 3,
+        "mapAllocated": false,
+        "middleQuality": 65,
+        "middleRadii": [
+          0.4000000059604645,
+          0.4000000059604645
+        ],
+        "mode": "TwoRenderedZonesWithOutside",
+        "outsideRegion": "peripheral-mask",
+        "outsideSceneSavings": 0,
+        "outsideSceneSuppression": false,
+        "recordedRates": [
+          "1x1",
+          "2x2"
+        ],
+        "renderedRect": [
+          0.0,
+          0.0,
+          1.0,
+          1.0
+        ],
+        "renderedZones": 2,
+        "runtimeBaselineFov": [
+          -0.800000011920929,
+          0.800000011920929,
+          0.800000011920929,
+          -0.800000011920929
+        ],
+        "state": "Immediate-context VRS bound; GPU execution not observed by layer",
+        "valid": true
+      }
+    },
+    {
+      "effectiveScale": 0.800000011920929,
+      "ffr": false,
+      "meanPSInvocations": 262144.0,
+      "meanSceneGpuMs": 0.008034000000000003,
+      "outsideSceneSavings": 0,
+      "recordedPlan": null
+    },
+    {
+      "effectiveScale": 0.800000011920929,
+      "ffr": true,
+      "meanPSInvocations": 105472.0,
+      "meanSceneGpuMs": 0.008190999999999999,
+      "outsideSceneSavings": 0,
+      "recordedPlan": {
+        "activeFov": [
+          -0.6890324950218201,
+          0.6890324950218201,
+          0.6890324950218201,
+          -0.6890324950218201
+        ],
+        "center": [
+          0.5,
+          0.5
+        ],
+        "centerRadii": [
+          0.20000000298023224,
+          0.20000000298023224
+        ],
+        "cropIsRenderedZone": false,
+        "effectiveScale": [
+          0.800000011920929,
+          0.800000011920929
+        ],
+        "hardwareApplicationConfirmed": false,
+        "logicalRegions": 3,
+        "mapAllocated": false,
+        "middleQuality": 65,
+        "middleRadii": [
+          0.4000000059604645,
+          0.4000000059604645
+        ],
+        "mode": "TwoRenderedZonesWithCrop",
+        "outsideRegion": "projection-crop",
+        "outsideSceneSavings": 0,
+        "outsideSceneSuppression": false,
+        "recordedRates": [
+          "1x1",
+          "2x2"
+        ],
+        "renderedRect": [
+          0.09999997913837433,
+          0.09999997913837433,
+          0.800000011920929,
+          0.800000011920929
+        ],
+        "renderedZones": 2,
+        "runtimeBaselineFov": [
+          -0.800000011920929,
+          0.800000011920929,
+          0.800000011920929,
+          -0.800000011920929
+        ],
+        "state": "Immediate-context VRS bound; GPU execution not observed by layer",
+        "valid": true
+      }
+    }
+  ],
+  "debugLayer": true,
+  "gameIntegrationTested": false
+}

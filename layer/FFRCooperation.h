@@ -18,3 +18,16 @@ struct FovD3D12FFRDrawInfo {
 };
 using PFN_xrFovBeginD3D12FFR = XrResult(XRAPI_PTR *)(XrSession, const FovD3D12FFRDrawInfo *);
 using PFN_xrFovEndD3D12FFR = XrResult(XRAPI_PTR *)(XrSession, ID3D12GraphicsCommandList *);
+
+// D3D11: caller serializes the session's immediate context, binds exactly one
+// single-slice RTV and one matching viewport, and starts with NVAPI VRS disabled.
+// Deferred contexts, simultaneous stereo RTVs and foreign VRS state are unsupported.
+struct FovD3D11FFRDrawInfo {
+    uint32_t version = FOV_FFR_COOPERATION_VERSION;
+    XrTime displayTime{};
+    uint32_t eye{};
+    XrSwapchainSubImage subImage{};
+    ID3D11DeviceContext *context{};
+};
+using PFN_xrFovBeginD3D11FFR = XrResult(XRAPI_PTR *)(XrSession, const FovD3D11FFRDrawInfo *);
+using PFN_xrFovEndD3D11FFR = XrResult(XRAPI_PTR *)(XrSession, ID3D11DeviceContext *);

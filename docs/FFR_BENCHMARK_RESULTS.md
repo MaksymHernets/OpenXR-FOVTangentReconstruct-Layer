@@ -1,4 +1,23 @@
-# FFR benchmark results — 0.1.5
+# FFR measurements — 0.1.8
+
+NVIDIA GeForce RTX 4060, Windows x64, D3D12 debug validation enabled. The automatic test uses ordinary direct command-list draws and **makes no cooperation API calls**. Sixteen measured frames follow four warm-up frames. The scene is a 512×768 target with actual pipeline-statistics queries. All values below are measured shader invocations, not modeled quality percentages or headset FPS.
+
+| Automatic test | Mean pixel-shader invocations |
+|---|---:|
+| FFR disabled; 80% FOV | 393,216 |
+| Automatic FFR; 80% FOV | 200,448 |
+| Automatic FFR; 80% FOV, RE Engine primitive MAX | 200,448 |
+| Automatic FFR; full FOV | 382,464 |
+| Partial overlay viewport (64×64) | 4,096 |
+| Foreign application-owned 2×2 VRS | 98,304 |
+
+The reduced-FOV fixture records **49.0% fewer pixel-shader invocations**. Both recorded draw commands and completed queue-fence evidence are checked. A following small viewport draw remains 1×1; application-owned VRS is preserved. Exactly two CPU map builds serve the repeated stable geometries, preventing per-draw map generation. Unknown mono-eye identity conservatively combines both per-eye Centers, so full-FOV savings are lower than an exact-eye map.
+
+The separate cooperative D3D12 benchmark still includes source copies and reconstruction in its GPU timeline. Full-FOV reconstruction adds cost; scene shader savings alone do not promise lower total frame time. D3D11 NVAPI timing and workload measurements remain explicit-cooperation fixtures. Outside scene suppression is unavailable and attributed **0% original scene savings** on every backend.
+
+Raw current evidence: [automatic D3D12](ffr-018-evidence/automatic-d3d12.json), [D3D12 timelines](ffr-018-evidence/benchmark.json), [D3D11 NVAPI](ffr-018-evidence/d3d11-nvapi.json), [layer integration](ffr-018-evidence/layer.json), [D3D11 layer](ffr-018-evidence/d3d11-layer.json), [27-test execution](ffr-018-evidence/27-tests.txt). A separate [RE3 live capture](ffr-018-evidence/re3-live.json) confirms automatic D3D12 draws completed through VDXR with Toolkit absent. Controlled GPU results and command execution counters do not establish headset visuals or game FPS.
+
+<!-- HISTORICAL_015 --># FFR benchmark results — 0.1.5
 
 Executed on NVIDIA GeForce RTX 4060, Windows x64, with the D3D12 debug layer enabled. These are actual rasterized scene draws using Tier 2 shading-rate images, not blur or synthetic timing estimates. They are **controlled fixture measurements**, not Hubris/headset performance.
 

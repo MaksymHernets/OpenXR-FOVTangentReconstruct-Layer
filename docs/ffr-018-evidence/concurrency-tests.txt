@@ -1,0 +1,9 @@
+Test project D:/MyProjects/Codex/OpenXR_FOVFill_layer/build-018
+    Start 3: ffr_d3d12_hardware
+1/2 Test #3: ffr_d3d12_hardware ...............   Passed   12.69 sec
+    Start 9: layer_dispatch_d3d12
+2/2 Test #9: layer_dispatch_d3d12 .............   Passed    2.26 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =  14.99 sec

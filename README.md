@@ -1,8 +1,8 @@
 # OpenXR FOV Extension
 
-Version **0.1.6**. Windows x64 implicit OpenXR API layer and Qt 6 **OpenXR FOV Manager**. The layer narrows each eye's projection in tangent space, recommends smaller render dimensions, and reconstructs the original projection using a separate runtime-owned output swapchain. Clamp, Gradient, Blur, Mirror, Solid Color, and **Temporal Depth Reconstruction** are implemented as GPU shaders for D3D11 and D3D12, with an experimental cooperative Vulkan 1.1+ compute backend.
+Version **0.1.8**. Windows x64 implicit OpenXR API layer and Qt 6 **OpenXR FOV Manager**. The layer narrows each eye's projection in tangent space, recommends smaller render dimensions, and reconstructs the original projection using a separate runtime-owned output swapchain. Clamp, Gradient, Blur, Mirror, Solid Color, and **Temporal Depth Reconstruction** are implemented as GPU shaders for D3D11 and D3D12, with an experimental cooperative Vulkan 1.1+ compute backend.
 
-This is an initial implementation with local GPU and dispatch tests. **Quest 3 visual validation, VDXR session testing, performance measurements, and long-running game compatibility testing remain required.** See [testing](docs/TESTING.md) and [design and limitations](docs/DESIGN.md). Do not interpret a successful build as headset certification.
+This is an initial implementation with local GPU and dispatch tests. **The RE3 VR mod was checked live through VDXR on D3D12: automatic FFR draws completed and the user confirmed both eyes look correct at 80% FOV with Blur. Broader visual coverage, game performance measurements, and long-running compatibility testing remain required.** See [testing](docs/TESTING.md) and [design and limitations](docs/DESIGN.md). Do not interpret a successful build as headset certification.
 
 ## Build
 
@@ -39,13 +39,21 @@ Building, packaging and simply opening the manager do not change OpenXR registra
 
 Edge Fill shows only settings used by the selected algorithm: Gradient exposes stretch width, gradient strength, and samples; Blur exposes stretch width, radius, and strength; Solid Color exposes the fill color; Temporal Depth Reconstruction exposes its reconstruction block. Clamp and Mirror have no additional parameters. The enable switch and algorithm selector remain available. Switching algorithms preserves parameter values.
 
-## Adaptive FFR in 0.1.5
+## Automatic FFR and persistent Outside reconstruction in 0.1.8
 
-The independent **FFR** tab configures projection-aware quality zones. Full effective FOV uses three rendered zones; additional application FOV reduction uses two rendered zones and the existing Reconstruction Manager for the crop. Center quality stays full, while middle/outer quality targets have independent persistent settings. The preview identifies rendered zones and reconstruction separately and labels unavailable live FOV evidence.
+At **100% effective FOV**, the layer keeps the original projection and reconstructs Outside using the selected Edge Fill algorithm. The Outside boundary uses the configured Middle X/Y radii and elliptical or rectangular geometry. Center remains 1×1; supported VRS can reduce Middle shading. Outside is never assigned a coarse VRS rate.
 
-Actual scene workload reduction is implemented for **cooperating D3D12 Tier 2 VRS applications**. Ordinary third-party games have no automatic scene-recording integration. D3D11 and Vulkan FFR are currently unsupported; their existing reconstruction remains available. FFR is disabled by default and never silently substitutes blur. Quality targets are discrete rate policies, not guaranteed quality percentages or savings.
+Below 100% on either axis, Center and Middle occupy the active rendered projection. Outside is the missing projection crop and uses the existing reconstruction mapping. The full-FOV peripheral mask and baseline-space crop are separate representations managed by `OutsideRegionManager`. Switching modes preserves the selected algorithm. Edge Fill and profile enable switches still gate reconstruction.
 
-See the [design](docs/FFR_DESIGN.md), [developer contract](docs/FFR_INTEGRATION.md), [tests and Hubris acceptance](docs/FFR_TESTING.md), and [measured benchmark](docs/FFR_BENCHMARK_RESULTS.md). GPU workload reduction is verified in a controlled rasterized fixture; Hubris and headset/runtime performance are not verified.
+The **FFR** tab exposes both modes, the Outside boundary, selected reconstruction, supported backend/rates, fallback policy, and independent diagnostic views. To isolate unexpected borders, select **Diagnostic Outside color fill** and choose a bright color under Edge Fill → Solid Color, then restore the desired algorithm. The configured color is retained across algorithm changes. Mask, crop, original input, reconstruction-only output and final composite are independently inspectable.
+
+**D3D12 Tier 2 FFR now intercepts ordinary scene draws automatically**, including eligible intermediate render targets. Applications no longer need to call the experimental cooperation API. The layer observes render-target descriptors, projection dimensions, command-list Reset, viewports, existing VRS state and queue submissions. It wraps eligible direct draws with a tiled map and restores state immediately. GPU-completed submission counters appear in the FFR tab. Native render passes, unknown indirect/bundle draws, ambiguous/mismatched targets and foreign VRS state are skipped.
+
+The 0.1.7 prototype's hardware tests exercised cooperating applications only; its scene integration gap prevented FFR in the RE3 VR mod even though Outside reconstruction ran. Version 0.1.8 addresses that gap for D3D12. D3D11 NVIDIA NVAPI still requires explicit scene cooperation. Vulkan scene FFR remains unsupported; its existing cooperative reconstruction remains available.
+
+Turn off another layer's FFR when testing this layer's automatic path. Existing application/Toolkit VRS is preserved and reported as a foreign-state skip rather than overridden. Outside original shading suppression remains **unsupported, with 0% scene savings**: replacing rendered pixels alone does not save that work. Full-FOV reconstruction can increase total GPU time even when Middle VRS reduces shader invocations.
+
+See the [design](docs/FFR_DESIGN.md), [developer contract](docs/FFR_INTEGRATION.md), [tests and Hubris acceptance](docs/FFR_TESTING.md), and [measured benchmark](docs/FFR_BENCHMARK_RESULTS.md). Hardware fixtures verify rendering and state restoration; Hubris/headset acceptance remains outstanding.
 
 ## Vulkan support in 0.1.4
 

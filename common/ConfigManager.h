@@ -11,6 +11,7 @@ struct FFRSettings {
     float centerX = .22f, centerY = .22f, middleX = .4f, middleY = .4f;
     float offsetX = 0, offsetY = 0, transition = .03f;
     int fullMiddleQuality = 65, reducedMiddleQuality = 65, outerQuality = 15;
+    int debugView = 0, outsideFallback = 0; // composite / adaptive blur (1 = configured solid color)
     std::string geometry = "ellipse", policy = "balanced";
     bool operator==(const FFRSettings &) const = default;
 };

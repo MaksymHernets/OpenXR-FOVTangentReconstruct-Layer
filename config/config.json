@@ -55,10 +55,11 @@
       "transition": 0.03,
       "fullMiddleQuality": 65,
       "reducedMiddleQuality": 65,
-      "outerQuality": 15,
       "geometry": "ellipse",
       "policy": "balanced",
-      "debug": false
+      "debug": false,
+      "debugView": 0,
+      "outsideFallback": 0
     }
   },
   "games": {},

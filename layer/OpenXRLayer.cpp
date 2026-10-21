@@ -5,6 +5,8 @@
 #include "VulkanCooperation.h"
 #include "FFRCooperation.h"
 #include "renderer/D3D12FFR.h"
+#include "renderer/D3D12SceneInterceptor.h"
+#include "renderer/D3D11FFR.h"
 #include "renderer/VulkanContext.h"
 #include <deque>
 #include <map>
@@ -65,7 +67,11 @@ struct Session {
     };
     std::deque<FFRLocated> ffrLocated;
     std::unique_ptr<D3D12FFR> ffr;
+    std::unique_ptr<D3D12SceneInterceptor> automaticFFR;
+    std::string automaticFFRError;
+    std::unique_ptr<D3D11FFR> ffr11;
     Json ffrDraws = Json::array();
+    std::optional<FFRSettings> outsideHistorySettings;
     using HistoryKey = std::tuple<uint64_t, uint64_t, uint32_t, uint32_t, uint32_t, int, int, int, int>;
     std::map<HistoryKey, TemporalHistory> histories;
     uint64_t historyInvalidations = 0, frameEpoch = 0;
@@ -144,7 +150,7 @@ static void error(Session &s, const std::string &message) {
     s.instance->ipc->report({{"lastError", message}, {"status", "Passthrough"}});
 }
 static bool allowed(const Profile &p) {
-    return p.enabled && p.edgeEnabled && (p.horizontal < 1 || p.vertical < 1);
+    return OutsideRegionManager::enabled(p);
 }
 static bool isDepth(const Swapchain &sc) {
     return sc.session->api == "Vulkan" ? vulkanDepthFormat(sc.info.format) : depthFormat(sc.info.format);
@@ -334,7 +340,7 @@ XRAPI_ATTR XrResult XRAPI_CALL hookDestroySession(XrSession handle) {
     auto s = lookup(sessions, handle);
     if (!s)
         return XR_ERROR_HANDLE_INVALID;
-    if (s->ffr && !s->ffr->readyForDestroy())
+    if ((s->ffr && !s->ffr->readyForDestroy()) || (s->ffr11 && s->ffr11->active()))
         return XR_ERROR_CALL_ORDER_INVALID;
     try {
         resetHistory(*s, true);
@@ -352,6 +358,7 @@ XRAPI_ATTR XrResult XRAPI_CALL hookDestroySession(XrSession handle) {
     } catch (...) {
         return XR_ERROR_RUNTIME_FAILURE;
     }
+    s->automaticFFR.reset();
     auto r = s->instance->DestroySession(handle);
     if (XR_SUCCEEDED(r)) {
         for (auto it = swapchains.begin(); it != swapchains.end();)
@@ -402,6 +409,7 @@ XRAPI_ATTR XrResult XRAPI_CALL hookCreateSession(XrInstance handle, const XrSess
                     auto b = reinterpret_cast<const XrGraphicsBindingD3D11KHR *>(p);
                     s->api = "D3D11";
                     s->renderer = makeD3D11(b->device);
+                    s->ffr11 = std::make_unique<D3D11FFR>(b->device);
                     break;
                 }
                 if (p->type == XR_TYPE_GRAPHICS_BINDING_D3D12_KHR) {
@@ -409,6 +417,12 @@ XRAPI_ATTR XrResult XRAPI_CALL hookCreateSession(XrInstance handle, const XrSess
                     s->api = "D3D12";
                     s->renderer = makeD3D12(b->device, b->queue);
                     s->ffr = std::make_unique<D3D12FFR>(b->device);
+                    if (s->ffr->capabilities().value("hardwareSupported", false))
+                        try {
+                            s->automaticFFR = std::make_unique<D3D12SceneInterceptor>(b->device, b->queue);
+                        } catch (const std::exception &e) {
+                            s->automaticFFRError = e.what();
+                        }
                     break;
                 }
                 // Vulkan2 is an alias of this tag and structure in the pinned SDK.
@@ -482,26 +496,45 @@ static void reportFFR(Session &s, const XrViewLocateInfo &info, XrView *views,
         item["eye"] = eye;
         eyes.push_back(item);
     }
+    if (s.automaticFFR)
+        s.automaticFFR->update(located.eyes, profile.ffr.enabled && profile.enabled && tracking);
     s.ffrLocated.push_back(located);
     while (s.ffrLocated.size() > 16)
         s.ffrLocated.pop_front();
     auto capability =
-        s.ffr ? s.ffr->capabilities()
-              : Json{{"hardwareSupported", nullptr},
-                     {"sceneIntegrationSupported", false},
-                     {"backend", s.api},
-                     {"reason", s.api == "Vulkan"
-                                    ? "Fragment shading-rate feature/render-pass integration unavailable"
-                                    : "Vendor scene-rendering integration unavailable"}};
+        s.ffr     ? s.ffr->capabilities()
+        : s.ffr11 ? s.ffr11->capabilities()
+                  : Json{{"hardwareSupported", nullptr},
+                         {"sceneIntegrationSupported", false},
+                         {"backend", s.api},
+                         {"reason", s.api == "Vulkan"
+                                        ? "Fragment shading-rate feature/render-pass integration unavailable"
+                                        : "Vendor scene-rendering integration unavailable"}};
+    if (s.automaticFFR) {
+        capability["backend"] = "Automatic D3D12 Tier 2 VRS";
+        capability["integrationRequired"] = false;
+        capability["reason"] = "Automatic scene interception installed";
+    }
     const char *methods[]{"clamp", "gradient", "blur", "mirror", "solid", "temporalDepth"};
     s.instance->ipc->report(
         {{"ffr",
           {{"enabled", profile.ffr.enabled && profile.enabled},
            {"eyes", eyes},
            {"capabilities", capability},
-           {"state", profile.ffr.enabled ? "Configured only; scene integration required" : "Disabled"},
+           {"state", !profile.ffr.enabled ? "Disabled"
+                     : s.automaticFFR     ? "Automatic scene interception enabled; see execution counters"
+                                          : "Configured only; scene integration required"},
+           {"automaticScene", s.automaticFFR ? s.automaticFFR->diagnostics()
+                                             : Json{{"installed", false}, {"reason", s.automaticFFRError}}},
            {"hardwareApplicationConfirmed", false},
            {"appliedRates", Json::array()},
+           {"outsideSceneSuppression", false},
+           {"outsideSceneSavings", 0},
+           {"outsideSuppressionReason",
+            "No verified scene-exclusion integration; reconstruction replaces pixels only"},
+           {"outsideFallback", profile.ffr.outsideFallback ? "configured-solid-color" : "adaptive-blur"},
+           {"debugView", profile.ffr.debugView},
+           {"nonfiniteEmergencyFallback", "configured-solid-color"},
            {"reconstructionMode", methods[std::clamp(profile.method, 0, 5)]},
            {"reconstructionAvailable", allowed(profile) && bool(s.renderer) && vulkanAllowed(s, profile)},
            {"displayTime", info.displayTime}}}});
@@ -523,6 +556,9 @@ XRAPI_ATTR XrResult XRAPI_CALL hookLocateViews(XrSession handle, const XrViewLoc
     }
     try {
         auto p = s->instance->ipc->profile();
+        if (s->outsideHistorySettings && *s->outsideHistorySettings != p.ffr && !s->histories.empty())
+            resetHistory(*s, true);
+        s->outsideHistorySettings = p.ffr;
         if (p.method != 5 && !s->histories.empty())
             resetHistory(*s, true);
         const auto validTracking = XR_VIEW_STATE_ORIENTATION_VALID_BIT | XR_VIEW_STATE_POSITION_VALID_BIT;
@@ -689,7 +725,8 @@ XRAPI_ATTR XrResult XRAPI_CALL hookReleaseSwapchainImage(XrSwapchain handle,
         return XR_ERROR_HANDLE_INVALID;
     sc->captured = false;
     bool copied = false;
-    if (sc->session->ffr && sc->session->ffr->active())
+    if ((sc->session->ffr && sc->session->ffr->active()) ||
+        (sc->session->ffr11 && sc->session->ffr11->active()))
         return XR_ERROR_CALL_ORDER_INVALID;
     auto profile = sc->session->instance->ipc->profile();
     if (sc->capable && !info->next && !sc->acquired.empty() && sc->acquired.front().waited &&
@@ -747,8 +784,24 @@ XRAPI_ATTR XrResult XRAPI_CALL hookEndFrame(XrSession handle, const XrFrameEndIn
     auto s = lookup(sessions, handle);
     if (!s)
         return XR_ERROR_HANDLE_INVALID;
-    if (s->ffr && s->ffr->active())
+    if ((s->ffr && s->ffr->active()) || (s->ffr11 && s->ffr11->active()))
         return XR_ERROR_CALL_ORDER_INVALID;
+    D3D12SceneInterceptor::Suppress suppressSceneHooks;
+    if (s->automaticFFR && info && info->layers) {
+        for (uint32_t i = 0; i < info->layerCount; ++i)
+            if (info->layers[i] && info->layers[i]->type == XR_TYPE_COMPOSITION_LAYER_PROJECTION) {
+                auto projection = reinterpret_cast<const XrCompositionLayerProjection *>(info->layers[i]);
+                if (projection->viewCount == 2 && projection->views)
+                    for (uint32_t eye = 0; eye < 2; ++eye) {
+                        auto &sub = projection->views[eye].subImage;
+                        auto sc = lookup(swapchains, sub.swapchain);
+                        if (sc && sc->session == s && isColor(*sc) && validSubImage(*sc, sub))
+                            s->automaticFFR->target(sub.imageRect.extent.width, sub.imageRect.extent.height,
+                                                    sc->info.arraySize);
+                    }
+            }
+        s->instance->ipc->report({{"ffrAutomaticScene", s->automaticFFR->diagnostics()}});
+    }
     s->ffrLocated.clear();
     const auto captureEpoch = s->frameEpoch++;
     auto passthrough = [&]() { return s->instance->EndFrame(handle, info); };
@@ -763,7 +816,7 @@ XRAPI_ATTR XrResult XRAPI_CALL hookEndFrame(XrSession handle, const XrFrameEndIn
             }
         if (rec == s->located.rend())
             return passthrough();
-        // Temporal reconstruction consumes an optional plain KHR depth attachment.
+        // Every algorithm accepts a plain KHR depth attachment; only temporal consumes it.
         // Other extension chains retain their original image/FOV pairing.
         struct Projection {
             uint32_t index;
@@ -791,7 +844,7 @@ XRAPI_ATTR XrResult XRAPI_CALL hookEndFrame(XrSession handle, const XrFrameEndIn
                 auto sc = lookup(swapchains, view.subImage.swapchain);
                 auto r = view.subImage.imageRect;
                 bool supportedChain = !view.next;
-                if (view.next && rec->profile.method == 5 && s->instance->depthExtension) {
+                if (view.next && s->instance->depthExtension) {
                     auto node = static_cast<const XrBaseInStructure *>(view.next);
                     supportedChain = node->type == XR_TYPE_COMPOSITION_LAYER_DEPTH_INFO_KHR && !node->next;
                 }
@@ -941,7 +994,7 @@ XRAPI_ATTR XrResult XRAPI_CALL hookEndFrame(XrSession handle, const XrFrameEndIn
                             rec->profile.temporal.gpuBudgetMs > 0 &&
                             s->renderer->gpuMilliseconds().value_or(0) > rec->profile.temporal.gpuBudgetMs;
                         if (budgetFallback) {
-                            c.method = 2;
+                            c.method = rec->profile.ffr.enabled && rec->profile.ffr.outsideFallback ? 4 : 2;
                             c.blurRadius = rec->profile.temporal.fallbackBlurRadius;
                             c.blurStrength = rec->profile.temporal.fallbackBlurStrength;
                             c.stretchWidth = rec->profile.temporal.fallbackStretchWidth;
@@ -952,7 +1005,10 @@ XRAPI_ATTR XrResult XRAPI_CALL hookEndFrame(XrSession handle, const XrFrameEndIn
                              {"depthAvailable", temporalFrame.hasDepth},
                              {"trackingValid", temporalFrame.trackingValid},
                              {"referenceSpaceAvailable", p.worldValid},
-                             {"mode", budgetFallback || input.gpu.settings[0] == 0 ? "Blur Fallback"
+                             {"mode", budgetFallback || input.gpu.settings[0] == 0
+                                          ? (rec->profile.ffr.enabled && rec->profile.ffr.outsideFallback
+                                                 ? "Solid Color Fallback"
+                                                 : "Blur Fallback")
                                       : metrics.available
                                           ? (metrics.reconstructedPercent > 0
                                                  ? (metrics.depthUsed ? "Depth" : "Rotation Only")
@@ -986,8 +1042,7 @@ XRAPI_ATTR XrResult XRAPI_CALL hookEndFrame(XrSession handle, const XrFrameEndIn
                             s->renderer->storeHistory(id(depthChain->handle), entry.depthKey, depthRegion);
                         history->commit(temporalFrame);
                     }
-                    if (history)
-                        view.next = nullptr;
+                    view.next = nullptr;
                     view.fov = rec->original[v];
                     view.subImage.swapchain = sc->output;
                     view.subImage.imageRect = rect;
@@ -1180,11 +1235,113 @@ XRAPI_ATTR XrResult XRAPI_CALL hookFovEndD3D12FFR(XrSession handle, ID3D12Graphi
         return XR_ERROR_CALL_ORDER_INVALID;
     }
 }
+XRAPI_ATTR XrResult XRAPI_CALL hookFovBeginD3D11FFR(XrSession handle, const FovD3D11FFRDrawInfo *info) {
+    std::lock_guard lock(objectsMutex);
+    auto s = lookup(sessions, handle);
+    if (!s)
+        return XR_ERROR_HANDLE_INVALID;
+    if (!info || info->version != FOV_FFR_COOPERATION_VERSION || info->eye >= 2)
+        return XR_ERROR_VALIDATION_FAILURE;
+    if (!s->ffr11)
+        return XR_ERROR_FEATURE_UNSUPPORTED;
+    auto sc = lookup(swapchains, info->subImage.swapchain);
+    if (!sc || sc->session != s || !isColor(*sc) || sc->info.sampleCount != 1 || sc->info.faceCount != 1 ||
+        sc->info.mipCount != 1 || sc->info.createFlags || sc->info.next ||
+        !validSubImage(*sc, info->subImage) || sc->acquired.empty() || !sc->acquired.front().waited)
+        return XR_ERROR_VALIDATION_FAILURE;
+    const auto frame = std::find_if(s->ffrLocated.rbegin(), s->ffrLocated.rend(),
+                                    [&](auto &f) { return f.time == info->displayTime; });
+    if (frame == s->ffrLocated.rend() || frame != s->ffrLocated.rbegin() || !frame->tracking ||
+        !frame->eyes[info->eye].settings.enabled)
+        return XR_ERROR_CALL_ORDER_INVALID;
+    try {
+        if (!info->context || info->context->GetType() != D3D11_DEVICE_CONTEXT_IMMEDIATE)
+            return XR_ERROR_VALIDATION_FAILURE;
+        if (sc->images.empty())
+            getImages(*sc, false);
+        auto index = sc->acquired.front().index;
+        if (index >= sc->images.size())
+            return XR_ERROR_VALIDATION_FAILURE;
+        ComPtr<ID3D11Resource> expected;
+        if (FAILED(sc->images[index].As(&expected)))
+            return XR_ERROR_VALIDATION_FAILURE;
+        ComPtr<ID3D11RenderTargetView> rtvs[8];
+        ID3D11RenderTargetView *raw[8]{};
+        info->context->OMGetRenderTargets(8, raw, nullptr);
+        for (int i = 0; i < 8; ++i)
+            rtvs[i].Attach(raw[i]);
+        if (!rtvs[0])
+            return XR_ERROR_VALIDATION_FAILURE;
+        for (int i = 1; i < 8; ++i)
+            if (rtvs[i])
+                return XR_ERROR_VALIDATION_FAILURE;
+        ComPtr<ID3D11Resource> bound;
+        rtvs[0]->GetResource(&bound);
+        if (bound.Get() != expected.Get())
+            return XR_ERROR_VALIDATION_FAILURE;
+        D3D11_RENDER_TARGET_VIEW_DESC desc{};
+        rtvs[0]->GetDesc(&desc);
+        if (desc.ViewDimension == D3D11_RTV_DIMENSION_TEXTURE2DARRAY) {
+            if (desc.Texture2DArray.ArraySize != 1 ||
+                desc.Texture2DArray.FirstArraySlice != info->subImage.imageArrayIndex ||
+                desc.Texture2DArray.MipSlice)
+                return XR_ERROR_VALIDATION_FAILURE;
+        } else if (desc.ViewDimension != D3D11_RTV_DIMENSION_TEXTURE2D || desc.Texture2D.MipSlice ||
+                   info->subImage.imageArrayIndex)
+            return XR_ERROR_VALIDATION_FAILURE;
+        UINT count = 1;
+        D3D11_VIEWPORT viewport{};
+        info->context->RSGetViewports(&count, &viewport);
+        auto r = info->subImage.imageRect;
+        if (count != 1 || viewport.TopLeftX != float(r.offset.x) || viewport.TopLeftY != float(r.offset.y) ||
+            viewport.Width != float(r.extent.width) || viewport.Height != float(r.extent.height))
+            return XR_ERROR_VALIDATION_FAILURE;
+        auto result = s->ffr11->begin(info->context, frame->eyes[info->eye], sc->info.width, sc->info.height,
+                                      info->subImage.imageRect);
+        // Diagnostics must not turn a successfully recorded scope into failure.
+        try {
+            result["eye"] = info->eye;
+            result["arrayLayer"] = info->subImage.imageArrayIndex;
+            s->ffrDraws.push_back(result);
+            while (s->ffrDraws.size() > 2)
+                s->ffrDraws.erase(s->ffrDraws.begin());
+            s->instance->ipc->report({{"ffrScene", s->ffrDraws}});
+        } catch (...) {
+        }
+        return XR_SUCCESS;
+    } catch (const std::exception &e) {
+        s->instance->ipc->report({{"ffrError", e.what()}});
+        return XR_ERROR_RUNTIME_FAILURE;
+    }
+}
+XRAPI_ATTR XrResult XRAPI_CALL hookFovEndD3D11FFR(XrSession handle, ID3D11DeviceContext *context) {
+    std::lock_guard lock(objectsMutex);
+    auto s = lookup(sessions, handle);
+    if (!s)
+        return XR_ERROR_HANDLE_INVALID;
+    if (!s->ffr11)
+        return XR_ERROR_FEATURE_UNSUPPORTED;
+    try {
+        s->ffr11->end(context);
+        return XR_SUCCESS;
+    } catch (const std::exception &e) {
+        s->instance->ipc->report({{"ffrError", e.what()}});
+        return XR_ERROR_CALL_ORDER_INVALID;
+    }
+}
 XRAPI_ATTR XrResult XRAPI_CALL hookGetInstanceProcAddr(XrInstance handle, const char *name,
                                                        PFN_xrVoidFunction *function) {
     if (!name || !function)
         return XR_ERROR_VALIDATION_FAILURE;
     *function = nullptr;
+    if (!std::strcmp(name, "xrFovBeginD3D11FFR")) {
+        *function = reinterpret_cast<PFN_xrVoidFunction>(Boundary<hookFovBeginD3D11FFR>::invoke);
+        return XR_SUCCESS;
+    }
+    if (!std::strcmp(name, "xrFovEndD3D11FFR")) {
+        *function = reinterpret_cast<PFN_xrVoidFunction>(Boundary<hookFovEndD3D11FFR>::invoke);
+        return XR_SUCCESS;
+    }
     if (!std::strcmp(name, "xrFovBeginD3D12FFR")) {
         *function = reinterpret_cast<PFN_xrVoidFunction>(Boundary<hookFovBeginD3D12FFR>::invoke);
         return XR_SUCCESS;

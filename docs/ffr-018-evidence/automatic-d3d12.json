@@ -1,0 +1,203 @@
+[
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D12 Tier 2 scene interception",
+      "candidateDraws": 0,
+      "drawsExecuted": 0,
+      "drawsRecorded": 0,
+      "enabled": false,
+      "executionConfirmedByFence": false,
+      "eyeMapping": "Conservative union of both per-eye full-quality centers; packed targets use per-eye halves",
+      "foreignVrsSkipped": 0,
+      "immutableMaps": 0,
+      "installed": true,
+      "lastForeignVrsState": {},
+      "mapBuilds": 0,
+      "observedRtvDescriptors": 1,
+      "outsideSceneSuppression": false,
+      "reason": "Waiting for observed projection targets and command-list Reset",
+      "targetDimensions": [
+        [
+          512,
+          768
+        ]
+      ],
+      "trackedCommandLists": 2
+    },
+    "enabled": false,
+    "foreignVrs": false,
+    "meanPSInvocations": 393216.0,
+    "partialViewport": false,
+    "primitiveMax": false,
+    "scale": 0.800000011920929
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D12 Tier 2 scene interception",
+      "candidateDraws": 40,
+      "drawsExecuted": 19,
+      "drawsRecorded": 19,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "eyeMapping": "Conservative union of both per-eye full-quality centers; packed targets use per-eye halves",
+      "foreignVrsSkipped": 0,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastForeignVrsState": {},
+      "mapBuilds": 1,
+      "observedRtvDescriptors": 1,
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D12 scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          768
+        ]
+      ],
+      "trackedCommandLists": 2
+    },
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 200448.0,
+    "partialViewport": false,
+    "primitiveMax": false,
+    "scale": 0.800000011920929
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D12 Tier 2 scene interception",
+      "candidateDraws": 80,
+      "drawsExecuted": 39,
+      "drawsRecorded": 39,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "eyeMapping": "Conservative union of both per-eye full-quality centers; packed targets use per-eye halves",
+      "foreignVrsSkipped": 0,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastForeignVrsState": {},
+      "mapBuilds": 1,
+      "observedRtvDescriptors": 1,
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D12 scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          768
+        ]
+      ],
+      "trackedCommandLists": 2
+    },
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 200448.0,
+    "partialViewport": false,
+    "primitiveMax": true,
+    "scale": 0.800000011920929
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D12 Tier 2 scene interception",
+      "candidateDraws": 120,
+      "drawsExecuted": 58,
+      "drawsRecorded": 58,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "eyeMapping": "Conservative union of both per-eye full-quality centers; packed targets use per-eye halves",
+      "foreignVrsSkipped": 0,
+      "immutableMaps": 2,
+      "installed": true,
+      "lastForeignVrsState": {},
+      "mapBuilds": 2,
+      "observedRtvDescriptors": 1,
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D12 scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          768
+        ]
+      ],
+      "trackedCommandLists": 2
+    },
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 382464.0,
+    "partialViewport": false,
+    "primitiveMax": false,
+    "scale": 1.0
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D12 Tier 2 scene interception",
+      "candidateDraws": 140,
+      "drawsExecuted": 58,
+      "drawsRecorded": 58,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "eyeMapping": "Conservative union of both per-eye full-quality centers; packed targets use per-eye halves",
+      "foreignVrsSkipped": 0,
+      "immutableMaps": 2,
+      "installed": true,
+      "lastForeignVrsState": {},
+      "mapBuilds": 2,
+      "observedRtvDescriptors": 1,
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D12 scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          768
+        ]
+      ],
+      "trackedCommandLists": 2
+    },
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 4096.0,
+    "partialViewport": true,
+    "primitiveMax": false,
+    "scale": 0.800000011920929
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D12 Tier 2 scene interception",
+      "candidateDraws": 140,
+      "drawsExecuted": 58,
+      "drawsRecorded": 58,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "eyeMapping": "Conservative union of both per-eye full-quality centers; packed targets use per-eye halves",
+      "foreignVrsSkipped": 20,
+      "immutableMaps": 2,
+      "installed": true,
+      "lastForeignVrsState": {
+        "combiners": [
+          0,
+          0
+        ],
+        "imageBound": false,
+        "rate": 5,
+        "targetHeight": 768,
+        "targetWidth": 512
+      },
+      "mapBuilds": 2,
+      "observedRtvDescriptors": 1,
+      "outsideSceneSuppression": false,
+      "reason": "Foreign VRS state observed; automatic override skipped",
+      "targetDimensions": [
+        [
+          512,
+          768
+        ]
+      ],
+      "trackedCommandLists": 2
+    },
+    "enabled": true,
+    "foreignVrs": true,
+    "meanPSInvocations": 98304.0,
+    "partialViewport": false,
+    "primitiveMax": false,
+    "scale": 0.800000011920929
+  }
+]

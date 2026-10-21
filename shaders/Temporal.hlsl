@@ -25,7 +25,8 @@ float metricDepth(uint index,float2 uv){
     float inv=lerp(h.depth.z,h.depth.w,t);return inv>1e-6?rcp(inv):-1;
 }
 float4 adaptiveBlur(float2 q,float distance){
-    float2 edge=saturate(q);float blend=smoothstep(0,max(adaptiveFallback.z,.001),distance);
+    if(outsidePolicy.w>0&&outsidePolicy.z>0)return fillColor;
+    float2 edge=validObservation(saturate(q));float blend=smoothstep(0,max(adaptiveFallback.z,.001),distance);
     float radius=adaptiveFallback.x*lerp(.35,1,blend);float4 sum=0;
     [unroll]for(int y=-1;y<=1;y++)[unroll]for(int x=-1;x<=1;x++)sum+=sampleImage(edge+float2(x,y)*texel/sourceRect.zw*radius);
     return lerp(sampleImage(edge),sum/9,adaptiveFallback.y*blend);
@@ -56,6 +57,8 @@ float4 temporalPixel(Vertex v,float2 q,float outsideDistance){
             float zy=metricDepth(i,uv+float2(0,rcp(max(h.dimensions.y,1))));
             if(zx<=0||zy<=0||max(abs(zx-z),abs(zy-z))>max(.03,z*.08))continue;
         }else if(!inImage(uv))continue;
+        // Masked source pixels are not valid temporal observations.
+        if(outsidePolicy.x>0&&maskRadius(uv,outsideMask.zw,outsidePolicy.x)>.98)continue;
         float angle=2*acos(saturate(abs(h.rotation.w)));
         float translation=length(h.translationAge.xyz);
         float c=(depth?.98:.82)*exp(-h.translationAge.w/max(h.dimensions.w,.02))*exp(-translation/(depth?.6:.025));

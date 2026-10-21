@@ -1,60 +1,35 @@
 #pragma once
 #include "ConfigManager.h"
-#include "FovMath.h"
+#include "OutsideRegion.h"
 #include <vector>
 #include <limits>
 namespace fov {
-enum class FFRZoneMode { ThreeRenderedZones, TwoRenderedZonesWithCrop };
+enum class FFRZoneMode { TwoRenderedZonesWithOutside, TwoRenderedZonesWithCrop };
 inline FFRZoneMode DetermineFFRMode(float horizontal, float vertical) {
     constexpr float epsilon = 1e-4f;
     return std::abs(horizontal - 1) <= epsilon && std::abs(vertical - 1) <= epsilon
-               ? FFRZoneMode::ThreeRenderedZones
+               ? FFRZoneMode::TwoRenderedZonesWithOutside
                : FFRZoneMode::TwoRenderedZonesWithCrop;
 }
 inline const char *ffrModeName(FFRZoneMode mode) {
-    return mode == FFRZoneMode::ThreeRenderedZones ? "ThreeRenderedZones" : "TwoRenderedZonesWithCrop";
+    return mode == FFRZoneMode::TwoRenderedZonesWithOutside ? "TwoRenderedZonesWithOutside"
+                                                            : "TwoRenderedZonesWithCrop";
 }
-struct FFRPlan {
-    XrFovf baseline{}, active{};
+struct FFRPlan : OutsideRegion {
     FFRSettings settings;
-    FFRZoneMode mode = FFRZoneMode::ThreeRenderedZones;
-    float horizontal = 1, vertical = 1;
-    // Active viewport in baseline normalized coordinates; never a rendered third zone.
-    std::array<float, 4> renderedRect{0, 0, 1, 1};
-    float cx = .5f, cy = .5f, centerX{}, centerY{}, middleX{}, middleY{};
+    FFRZoneMode mode = FFRZoneMode::TwoRenderedZonesWithOutside;
+    float centerX{}, centerY{};
     int middleQuality = 65;
-    bool valid = false;
 };
 inline FFRPlan makeFFRPlan(XrFovf baseline, XrFovf active, const FFRSettings &settings) {
     FFRPlan p;
-    p.baseline = baseline;
-    p.active = active;
+    static_cast<OutsideRegion &>(p) = OutsideRegionManager::plan(baseline, active, settings);
     p.settings = settings;
-    const float bl = std::tan(baseline.angleLeft), br = std::tan(baseline.angleRight),
-                bu = std::tan(baseline.angleUp), bd = std::tan(baseline.angleDown),
-                l = std::tan(active.angleLeft), r = std::tan(active.angleRight), u = std::tan(active.angleUp),
-                d = std::tan(active.angleDown);
-    for (float x : {bl, br, bu, bd, l, r, u, d})
-        if (!std::isfinite(x))
-            return p;
-    if (br - bl < 1e-5f || bu - bd < 1e-5f || r - l < 1e-5f || u - d < 1e-5f || l < bl - 1e-4f ||
-        r > br + 1e-4f || u > bu + 1e-4f || d < bd - 1e-4f)
-        return p;
-    p.horizontal = (r - l) / (br - bl);
-    p.vertical = (u - d) / (bu - bd);
     p.mode = DetermineFFRMode(p.horizontal, p.vertical);
-    p.renderedRect = {(l - bl) / (br - bl), (bu - u) / (bu - bd), p.horizontal, p.vertical};
-    p.cx = std::clamp(-l / (r - l) + settings.offsetX, .02f, .98f);
-    p.cy = std::clamp(u / (u - d) + settings.offsetY, .02f, .98f);
-    p.middleX = std::min(settings.middleX, std::min(p.cx, 1 - p.cx));
-    p.middleY = std::min(settings.middleY, std::min(p.cy, 1 - p.cy));
     p.centerX = std::min(settings.centerX, p.middleX);
     p.centerY = std::min(settings.centerY, p.middleY);
-    if (!(p.centerX > 0 && p.centerY > 0))
-        return p;
-    p.middleQuality = p.mode == FFRZoneMode::ThreeRenderedZones ? settings.fullMiddleQuality
-                                                                : settings.reducedMiddleQuality;
-    p.valid = true;
+    p.valid &= p.centerX > 0 && p.centerY > 0;
+    p.middleQuality = p.cropped() ? settings.reducedMiddleQuality : settings.fullMiddleQuality;
     return p;
 }
 inline int ffrZone(const FFRPlan &p, float x, float y, float paddingX = 0, float paddingY = 0) {
@@ -70,7 +45,7 @@ inline int ffrZone(const FFRPlan &p, float x, float y, float paddingX = 0, float
     };
     if (inside(p.centerX, p.centerY))
         return 1;
-    if (p.mode == FFRZoneMode::TwoRenderedZonesWithCrop || inside(p.middleX, p.middleY))
+    if (p.cropped() || OutsideRegionManager::boundary(p, p.settings, x, y) <= 1)
         return 2;
     return 3;
 }
@@ -125,14 +100,24 @@ inline std::vector<uint8_t> ffrRateMap(const FFRPlan &p, uint32_t width, uint32_
                 right > viewport.offset.x + viewport.extent.width ||
                 bottom > viewport.offset.y + viewport.extent.height)
                 continue;
+            // Outside and every tile touching it remain 1x1. Coarse Middle tiles
+            // must be wholly contained in the reconstruction observation boundary.
+            if (!p.cropped()) {
+                bool inside = true;
+                for (float px : {left, right})
+                    for (float py : {top, bottom})
+                        inside &= OutsideRegionManager::boundary(
+                                      p, p.settings, (px - viewport.offset.x) / viewport.extent.width,
+                                      (py - viewport.offset.y) / viewport.extent.height) <= 1;
+                if (!inside)
+                    continue;
+            }
             int zone = ffrZone(p, ((left + right) * .5f - viewport.offset.x) / viewport.extent.width,
                                ((top + bottom) * .5f - viewport.offset.y) / viewport.extent.height,
                                (right - left) * .5f / viewport.extent.width,
                                (bottom - top) * .5f / viewport.extent.height);
             result[size_t(y) * cols + x] =
-                zone == 1 ? 0
-                          : ffrRate(zone == 2 ? p.middleQuality : p.settings.outerQuality, p.settings.policy,
-                                    additionalRates);
+                zone != 2 ? 0 : ffrRate(p.middleQuality, p.settings.policy, additionalRates);
         }
     return result;
 }
@@ -140,7 +125,11 @@ inline Json ffrPlanJson(const FFRPlan &p) {
     auto angles = [](XrFovf f) { return Json::array({f.angleLeft, f.angleRight, f.angleUp, f.angleDown}); };
     return {{"valid", p.valid},
             {"mode", ffrModeName(p.mode)},
-            {"renderedZones", p.mode == FFRZoneMode::ThreeRenderedZones ? 3 : 2},
+            {"renderedZones", 2},
+            {"logicalRegions", 3},
+            {"outsideRegion", p.cropped() ? "projection-crop" : "peripheral-mask"},
+            {"outsideSceneSuppression", false},
+            {"outsideSceneSavings", 0},
             {"effectiveScale", {p.horizontal, p.vertical}},
             {"runtimeBaselineFov", angles(p.baseline)},
             {"activeFov", angles(p.active)},
@@ -149,8 +138,6 @@ inline Json ffrPlanJson(const FFRPlan &p) {
             {"centerRadii", {p.centerX, p.centerY}},
             {"middleRadii", {p.middleX, p.middleY}},
             {"middleQuality", p.middleQuality},
-            {"outerQuality",
-             p.mode == FFRZoneMode::ThreeRenderedZones ? Json(p.settings.outerQuality) : Json(nullptr)},
             {"cropIsRenderedZone", false}};
 }
 } // namespace fov

@@ -1,0 +1,59 @@
+Test project D:/MyProjects/Codex/OpenXR_FOVFill_layer/build-018
+      Start  1: registration_upgrade
+ 1/27 Test  #1: registration_upgrade .............   Passed    0.52 sec
+      Start  2: ffr_projection_and_config
+ 2/27 Test  #2: ffr_projection_and_config ........   Passed    0.01 sec
+      Start  3: ffr_d3d12_hardware
+ 3/27 Test  #3: ffr_d3d12_hardware ...............   Passed   11.72 sec
+      Start  4: ffr_d3d11_nvapi_hardware
+ 4/27 Test  #4: ffr_d3d11_nvapi_hardware .........   Passed    9.25 sec
+      Start  5: core_and_gpu
+ 5/27 Test  #5: core_and_gpu .....................   Passed   20.08 sec
+      Start  6: layer_dispatch
+ 6/27 Test  #6: layer_dispatch ...................   Passed    2.18 sec
+      Start  7: layer_depth_non_temporal_d3d11
+ 7/27 Test  #7: layer_depth_non_temporal_d3d11 ...   Passed    2.18 sec
+      Start  8: layer_depth_non_temporal_d3d12
+ 8/27 Test  #8: layer_depth_non_temporal_d3d12 ...   Passed    2.20 sec
+      Start  9: layer_dispatch_d3d12
+ 9/27 Test  #9: layer_dispatch_d3d12 .............   Passed    2.14 sec
+      Start 10: layer_temporal_d3d11
+10/27 Test #10: layer_temporal_d3d11 .............   Passed    2.19 sec
+      Start 11: layer_temporal_d3d12
+11/27 Test #11: layer_temporal_d3d12 .............   Passed    2.80 sec
+      Start 12: temporal_d3d11
+12/27 Test #12: temporal_d3d11 ...................   Passed    1.16 sec
+      Start 13: temporal_d3d12
+13/27 Test #13: temporal_d3d12 ...................   Passed    1.14 sec
+      Start 14: vulkan_gpu
+14/27 Test #14: vulkan_gpu .......................   Passed    2.04 sec
+      Start 15: vulkan_layer_array
+15/27 Test #15: vulkan_layer_array ...............   Passed    3.24 sec
+      Start 16: vulkan_layer_enable2
+16/27 Test #16: vulkan_layer_enable2 .............   Passed    3.92 sec
+      Start 17: vulkan_layer_separate
+17/27 Test #17: vulkan_layer_separate ............   Passed    3.03 sec
+      Start 18: vulkan_layer_packed
+18/27 Test #18: vulkan_layer_packed ..............   Passed    3.60 sec
+      Start 19: vulkan_layer_depth
+19/27 Test #19: vulkan_layer_depth ...............   Passed    3.54 sec
+      Start 20: vulkan_layer_depth_packed
+20/27 Test #20: vulkan_layer_depth_packed ........   Passed    3.60 sec
+      Start 21: vulkan_layer_depth_separate
+21/27 Test #21: vulkan_layer_depth_separate ......   Passed    3.69 sec
+      Start 22: vulkan_layer_mixed_extensions
+22/27 Test #22: vulkan_layer_mixed_extensions ....   Passed    3.80 sec
+      Start 23: vulkan_full_mask_array
+23/27 Test #23: vulkan_full_mask_array ...........   Passed    3.07 sec
+      Start 24: vulkan_full_mask_packed
+24/27 Test #24: vulkan_full_mask_packed ..........   Passed    2.96 sec
+      Start 25: vulkan_full_mask_separate
+25/27 Test #25: vulkan_full_mask_separate ........   Passed    2.95 sec
+      Start 26: vulkan_full_mask_temporal
+26/27 Test #26: vulkan_full_mask_temporal ........   Passed    3.05 sec
+      Start 27: gui_localization
+27/27 Test #27: gui_localization .................   Passed    0.15 sec
+
+100% tests passed out of 27
+
+Total Test time (real) = 100.37 sec

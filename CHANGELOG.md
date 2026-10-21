@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.1.8
+
+- Fixed the RE3 VR mod integration gap: added automatic D3D12 Tier 2 scene interception rather than requiring application calls to the cooperation API.
+- Observed RTV creation/copies, command-list Reset and viewports; applied immutable shading-rate maps around eligible direct scene draws and restored graphics state immediately.
+- Added queue-fence execution evidence and UI draw counters; preserved foreign VRS state, skipped unsupported render-pass/indirect/bundle cases, and retained recorded maps with command-list lifetime owners.
+- Cached map generation by projection/geometry/viewport rather than per draw; kept Outside reconstruction independent and retained 1x1 Outside shading where the original scene is still rendered.
+- Allowed multiple local diagnostic readers so an open manager does not block regression tools.
+- Added an actual hardware test with no cooperation API calls, pixel-shader workload queries, full-rate restoration and foreign-state checks.
+- Supported RE Engine's MAX-per-primitive combiner without overwriting foreign images or coarse base rates; confirmed automatic GPU execution and user-accepted stereo visuals in the RE3 VR mod through VDXR.
+
+## 0.1.7 — unreleased prototype
+
+- Replaced full-FOV coarse Outer VRS with a reconstructed Outside mask, sharing one projection authority with cropped reconstruction and both VRS backends.
+- Reused all six reconstruction shaders for elliptical/rectangular masks; preserved Center/Middle pixels and original projection, per-eye subrects and array layers.
+- Added optional D3D11 NVIDIA NVAPI scene scopes with exact target/viewport checks, capability reporting and state restoration; kept D3D12 Tier 2 scopes and conservative tile boundaries.
+- Accepted plain KHR depth attachments with every reconstruction algorithm, correcting an algorithm-dependent processing rejection.
+- Added independent Center/Middle/mask/crop/input/output/composite and diagnostic color-fill views, explicit adaptive-blur/solid fallback, persistent controls and translations in all eleven languages.
+- Added GPU readback, hardware workload, state-restoration and depth-attachment regression coverage. Outside scene exclusion and automatic game VRS integration remain unsupported; no Hubris/headset compatibility claim is made.
+
 ## 0.1.6
 
 - Fixed registration after an older installation was disabled: only active same-layer registrations now block enabling a different copy. Disabled installations and other layers are preserved.

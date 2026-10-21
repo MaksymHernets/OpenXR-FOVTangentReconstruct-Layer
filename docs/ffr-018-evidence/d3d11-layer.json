@@ -1,0 +1,74 @@
+[
+  {
+    "algorithm": 0,
+    "fullFov": true,
+    "outputReplaced": true,
+    "plainDepthAccepted": true
+  },
+  {
+    "algorithm": 1,
+    "fullFov": true,
+    "outputReplaced": true,
+    "plainDepthAccepted": true
+  },
+  {
+    "algorithm": 2,
+    "fullFov": true,
+    "outputReplaced": true,
+    "plainDepthAccepted": true
+  },
+  {
+    "algorithm": 3,
+    "fullFov": true,
+    "outputReplaced": true,
+    "plainDepthAccepted": true
+  },
+  {
+    "algorithm": 4,
+    "fullFov": true,
+    "outputReplaced": true,
+    "plainDepthAccepted": true
+  },
+  {
+    "algorithm": 5,
+    "fullFov": true,
+    "outputReplaced": true,
+    "plainDepthAccepted": true
+  },
+  {
+    "algorithm": 0,
+    "fullFov": false,
+    "outputReplaced": true,
+    "plainDepthAccepted": true
+  },
+  {
+    "algorithm": 1,
+    "fullFov": false,
+    "outputReplaced": true,
+    "plainDepthAccepted": true
+  },
+  {
+    "algorithm": 2,
+    "fullFov": false,
+    "outputReplaced": true,
+    "plainDepthAccepted": true
+  },
+  {
+    "algorithm": 3,
+    "fullFov": false,
+    "outputReplaced": true,
+    "plainDepthAccepted": true
+  },
+  {
+    "algorithm": 4,
+    "fullFov": false,
+    "outputReplaced": true,
+    "plainDepthAccepted": true
+  },
+  {
+    "algorithm": 5,
+    "fullFov": false,
+    "outputReplaced": true,
+    "plainDepthAccepted": true
+  }
+]

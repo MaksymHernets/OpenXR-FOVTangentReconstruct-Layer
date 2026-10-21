@@ -47,6 +47,11 @@ Json D3D12FFR::capabilities() const {
             {"sceneIntegrationSupported", impl->supported},
             {"tileSize", impl->options.ShadingRateImageTileSize},
             {"additionalRates", bool(impl->options.AdditionalShadingRatesSupported)},
+            {"supportedRates", impl->supported
+                                   ? (impl->options.AdditionalShadingRatesSupported
+                                          ? Json::array({"1x1", "1x2", "2x1", "2x2", "2x4", "4x2", "4x4"})
+                                          : Json::array({"1x1", "1x2", "2x1", "2x2"}))
+                                   : Json::array()},
             {"integrationRequired", true},
             {"reason", impl->supported ? "Explicit scene-recording cooperation required"
                                        : "Single-node D3D12 VRS Tier 2 required"}};
@@ -133,10 +138,6 @@ Json D3D12FFR::begin(ID3D12GraphicsCommandList *list, uint32_t index, ID3D12Fenc
     auto report = ffrPlanJson(plan);
     report["recordedRates"] = {"1x1", ffrRateName(ffrRate(plan.middleQuality, plan.settings.policy,
                                                           impl->options.AdditionalShadingRatesSupported))};
-    if (plan.mode == FFRZoneMode::ThreeRenderedZones)
-        report["recordedRates"].push_back(
-            ffrRateName(ffrRate(plan.settings.outerQuality, plan.settings.policy,
-                                impl->options.AdditionalShadingRatesSupported)));
     report["state"] = "Scene commands recorded; execution not observed by layer";
     report["hardwareApplicationConfirmed"] = false;
     report["mapAllocated"] = allocated;

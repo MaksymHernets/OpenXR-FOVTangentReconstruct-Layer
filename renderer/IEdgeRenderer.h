@@ -1,7 +1,7 @@
 #pragma once
 #include "common/Platform.h"
 #include "common/ConfigManager.h"
-#include "common/FovMath.h"
+#include "common/OutsideRegion.h"
 #include "common/Temporal.h"
 #include <memory>
 #include <optional>
@@ -20,8 +20,11 @@ struct alignas(16) ShaderConstants {
     unsigned edgeSamples;
     float padding[3]{};
     float fillColor[4]{0, 0, 0, 1};
+    float outsideMask[4]{};   // center XY, boundary radii XY
+    float outsidePolicy[4]{}; // 1 ellipse / 2 rectangle, debug view, fallback, FFR active
+    float centerMask[4]{};    // center radii XY, transition, reserved
 };
-static_assert(sizeof(ShaderConstants) == 96);
+static_assert(sizeof(ShaderConstants) == 144);
 inline void setDisplayFillColor(ShaderConstants &c, const Profile &p, bool srgb) {
     for (size_t i = 0; i < 3; i++) {
         float value = p.color[i];
@@ -48,6 +51,21 @@ inline ShaderConstants constants(const XrCompositionLayerProjectionView &view, X
     c.texel[0] = 1.f / ci.width;
     c.texel[1] = 1.f / ci.height;
     c.slice = view.subImage.imageArrayIndex;
+    auto outside = OutsideRegionManager::plan(original, view.fov, p.ffr);
+    if (p.ffr.enabled && outside.valid) {
+        c.outsideMask[0] = outside.cx;
+        c.outsideMask[1] = outside.cy;
+        c.outsideMask[2] = outside.middleX;
+        c.outsideMask[3] = outside.middleY;
+        c.outsidePolicy[0] = outside.cropped() ? 0.f : p.ffr.geometry == "rectangle" ? 2.f : 1.f;
+        c.outsidePolicy[1] = float(p.ffr.debugView);
+        c.outsidePolicy[2] = float(p.ffr.outsideFallback);
+        c.outsidePolicy[3] = 1;
+        c.centerMask[0] = std::min(p.ffr.centerX, outside.middleX);
+        c.centerMask[1] = std::min(p.ffr.centerY, outside.middleY);
+        c.centerMask[2] = p.ffr.transition;
+        c.centerMask[3] = p.ffr.geometry == "rectangle" ? 2.f : 1.f;
+    }
     c.method = p.method;
     c.stretchWidth = p.stretchWidth;
     c.gradientStrength = p.gradientStrength;

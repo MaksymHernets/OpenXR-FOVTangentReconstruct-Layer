@@ -10,8 +10,8 @@ int main() {
         FFRSettings settings;
         settings.enabled = true;
         XrFovf baseline{-.9f, .65f, .8f, -.7f};
-        require(DetermineFFRMode(1, 1) == FFRZoneMode::ThreeRenderedZones, "full mode");
-        require(DetermineFFRMode(1.00005f, .99995f) == FFRZoneMode::ThreeRenderedZones, "epsilon");
+        require(DetermineFFRMode(1, 1) == FFRZoneMode::TwoRenderedZonesWithOutside, "full mode");
+        require(DetermineFFRMode(1.00005f, .99995f) == FFRZoneMode::TwoRenderedZonesWithOutside, "epsilon");
         for (auto scale : {.5f, .7f, .85f, .99f})
             for (int axis = 0; axis < 3; ++axis) {
                 auto p = makeFFRPlan(baseline, reduce(baseline, axis == 1 ? 1 : scale, axis == 0 ? 1 : scale),
@@ -26,7 +26,7 @@ int main() {
                         "authoritative horizontal span");
             }
         auto streamed = reduce(baseline, .7f, .8f);
-        require(makeFFRPlan(streamed, streamed, settings).mode == FFRZoneMode::ThreeRenderedZones,
+        require(makeFFRPlan(streamed, streamed, settings).mode == FFRZoneMode::TwoRenderedZonesWithOutside,
                 "streamer baseline not additional crop");
         auto left = makeFFRPlan(baseline, baseline, settings);
         auto right = makeFFRPlan({-.65f, .9f, .8f, -.7f}, {-.65f, .9f, .8f, -.7f}, settings);
@@ -44,6 +44,21 @@ int main() {
         for (int y = 0; y < 48; ++y)
             for (int x = 32; x < 64; ++x)
                 require(map[y * 64 + x] == 0, "packed neighbor stays full quality");
+        require(map[0] == 0 && ffrPlanJson(left)["renderedZones"] == 2,
+                "Outside is reconstructed, never a coarse VRS region");
+        Profile full;
+        full.horizontal = full.vertical = 1;
+        require(!OutsideRegionManager::enabled(full), "Full FOV idle without FFR");
+        full.ffr.enabled = true;
+        require(OutsideRegionManager::enabled(full), "Full FOV Outside reconstruction active");
+        for (int y = 0; y < 48; ++y)
+            for (int x = 0; x < 32; ++x) {
+                if (map[y * 64 + x])
+                    for (float px : {float(x * 16), float((x + 1) * 16)})
+                        for (float py : {float(y * 16), float((y + 1) * 16)})
+                            require(OutsideRegionManager::boundary(left, settings, px / 512, py / 768) <= 1,
+                                    "Coarse tiles cannot cross Outside reconstruction mask");
+            }
         for (int q : {10, 15, 20, 50, 65, 75, 100})
             require(ffrRate(q, "aggressive", false) <= 5, "optional rates conservative fallback");
         require(ffrRate(100, "aggressive", true) == 0 && ffrRate(75, "conservative", true) == 0 &&

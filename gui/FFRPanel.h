@@ -10,9 +10,9 @@ class FFRPreview;
 class FFRPanel : public QWidget {
     QCheckBox *enabled, *debug;
     QDoubleSpinBox *centerX, *centerY, *middleX, *middleY, *offsetX, *offsetY, *transition;
-    QSpinBox *fullQuality, *reducedQuality, *outerQuality;
-    QComboBox *geometry, *policy;
-    QLabel *effective, *mode, *support, *reconstruction, *outerLabel, *fullLabel, *reducedLabel;
+    QSpinBox *fullQuality, *reducedQuality;
+    QComboBox *geometry, *policy, *debugView, *fallback;
+    QLabel *effective, *mode, *support, *reconstruction, *fullLabel, *reducedLabel;
     FFRPreview *preview;
     fov::Json observed = fov::Json::object();
     float requestedH = 1, requestedV = 1;

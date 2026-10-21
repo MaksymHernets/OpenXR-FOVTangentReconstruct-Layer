@@ -1,4 +1,5 @@
 #include "gui/MainWindow.h"
+#include "gui/FFRPanel.h"
 #include "gui/Localization.h"
 #include <QApplication>
 #include <QComboBox>
@@ -50,6 +51,25 @@ int main(int argc, char **argv) {
             j["defaults"]["vulkan"] = {{"enabled", false}, {"processing", "passthrough"}};
         });
         MainWindow window;
+        {
+            FFRPanel panel;
+            fov::Json eye = {{"runtimeBaselineFov", {-.8, .8, .8, -.8}}, {"activeFov", {-.8, .8, .8, -.8}}};
+            panel.setObserved({{"eyes", {eye, eye}},
+                               {"capabilities",
+                                {{"hardwareSupported", true},
+                                 {"integrationRequired", false},
+                                 {"backend", "Automatic D3D12 Tier 2 VRS"}}},
+                               {"automaticScene",
+                                {{"installed", true},
+                                 {"drawsRecorded", 12},
+                                 {"drawsExecuted", 5},
+                                 {"reason", "Queue completion observed"}}}});
+            auto support = panel.findChild<QLabel *>("ffrSupport")->text();
+            require(support.contains("Automatic D3D12 scene interception installed") &&
+                        support.contains("12 recorded draws; 5 GPU-executed draws"),
+                    "UI distinguishes automatic execution evidence from hardware capability");
+        }
+
         auto tabs = window.findChild<QTabWidget *>();
         auto language = window.findChild<QComboBox *>("languageChoice");
         auto locale = window.findChild<QComboBox *>("localeChoice");
@@ -69,25 +89,27 @@ int main(int argc, char **argv) {
         auto ffrEnabled = window.findChild<QCheckBox *>("ffrEnabled");
         auto ffrFull = window.findChild<QSpinBox *>("ffrFullMiddle");
         auto ffrReduced = window.findChild<QSpinBox *>("ffrReducedMiddle");
-        auto ffrOuter = window.findChild<QSpinBox *>("ffrOuter");
+        auto ffrOutside = window.findChild<QLabel *>("ffrReconstruction");
+        auto ffrDebugView = window.findChild<QComboBox *>("ffrDebugView");
         auto ffrMode = window.findChild<QLabel *>("ffrMode");
-        require(ffrEnabled && ffrFull && ffrReduced && ffrOuter && ffrMode, "independent FFR panel");
+        require(ffrEnabled && ffrFull && ffrReduced && ffrOutside && ffrDebugView && ffrMode,
+                "independent FFR panel");
         ffrEnabled->setChecked(true);
         ffrFull->setValue(50);
         ffrReduced->setValue(75);
-        ffrOuter->setValue(10);
+        ffrDebugView->setCurrentIndex(3);
         std::array<QDoubleSpinBox *, 2> fovSpins{spin, window.findChild<QDoubleSpinBox *>("verticalFov")};
         fovSpins[0]->setValue(1);
         fovSpins[1]->setValue(1);
-        require(!ffrOuter->isHidden() && ffrReduced->isHidden(), "full-FOV three-zone controls");
+        require(!ffrOutside->isHidden() && ffrReduced->isHidden(), "full-FOV three-zone controls");
         fovSpins[0]->setValue(.85);
-        require(ffrOuter->isHidden() && !ffrReduced->isHidden(),
+        require(!ffrOutside->isHidden() && !ffrReduced->isHidden(),
                 "anisotropic reduction selects two-zone controls");
         fovSpins[0]->setValue(1);
         fovSpins[1]->setValue(.8);
-        require(ffrOuter->isHidden(), "vertical reduction selects two-zone controls");
+        require(!ffrOutside->isHidden(), "vertical reduction selects two-zone controls");
         fovSpins[1]->setValue(1);
-        require(ffrFull->value() == 50 && ffrReduced->value() == 75 && ffrOuter->value() == 10,
+        require(ffrFull->value() == 50 && ffrReduced->value() == 75 && ffrDebugView->currentIndex() == 3,
                 "mode switches preserve independent quality");
         fovSpins[0]->setValue(value);
         fovSpins[1]->setValue(.8);
@@ -169,7 +191,7 @@ int main(int argc, char **argv) {
                 button->click();
         auto savedFfr = fov::parseProfile(fov::loadJson(path / L"config.json")["defaults"]).ffr;
         require(savedFfr.enabled && savedFfr.fullMiddleQuality == 50 && savedFfr.reducedMiddleQuality == 75 &&
-                    savedFfr.outerQuality == 10,
+                    savedFfr.debugView == 3,
                 "FFR editor persistence");
         auto savedVulkan = fov::loadJson(path / L"config.json")["defaults"]["vulkan"];
         require(savedVulkan["enabled"] == false && savedVulkan["processing"] == "passthrough",

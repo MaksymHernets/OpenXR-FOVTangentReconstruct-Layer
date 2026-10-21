@@ -3,6 +3,7 @@
 #include "LayerTests.cpp"
 #undef wmain
 #include "renderer/D3D12FFR.h"
+#include "renderer/D3D12SceneInterceptor.h"
 #include "renderer/IEdgeRenderer.h"
 #include <fstream>
 #include "layer/FFRCooperation.h"
@@ -292,9 +293,10 @@ static Json benchmark(RasterFixture &gpu, float h, float v, bool enabled, int qu
         gpu.scene->EndQuery(gpu.timestamps.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 1);
         gpu.submit(gpu.scene.Get());
         check(gpu.queue->Signal(gpu.fence.Get(), completion));
-        if (h < 1 || v < 1) {
+        if (h < 1 || v < 1 || enabled) {
             reconstruction->capture(77, source.Get(), DXGI_FORMAT_R8G8B8A8_UNORM);
             Profile p;
+            p.ffr = settings;
             p.horizontal = h;
             p.vertical = v;
             XrSwapchainCreateInfo ci{XR_TYPE_SWAPCHAIN_CREATE_INFO};
@@ -344,7 +346,7 @@ static Json benchmark(RasterFixture &gpu, float h, float v, bool enabled, int qu
              ? "full"
              : ("reduced-" + std::to_string(int(h * 100)) + "-" + std::to_string(int(v * 100)))) +
         (enabled ? "-ffr" : "-baseline") + "-q" + std::to_string(quality);
-    gpu.capture(h < 1 || v < 1 ? output.Get() : source.Get(), name);
+    gpu.capture(h < 1 || v < 1 || enabled ? output.Get() : source.Get(), name);
     gpu.validate();
     auto mean = [](const auto &a) { return std::accumulate(a.begin(), a.end(), 0.0) / a.size(); };
     auto deadlines = [&](double ms) {
@@ -354,7 +356,8 @@ static Json benchmark(RasterFixture &gpu, float h, float v, bool enabled, int qu
             {"scale", {h, v}},
             {"ffr", enabled},
             {"middleQuality", quality},
-            {"outerQuality", outer},
+            {"outsideSceneSuppression", false},
+            {"outsideSceneSavings", 0},
             {"policy", policy},
             {"mode", ffrModeName(DetermineFFRMode(h, v))},
             {"sourceDimensions", {width, height}},
@@ -375,6 +378,87 @@ static Json benchmark(RasterFixture &gpu, float h, float v, bool enabled, int qu
             {"headsetMissedDeadlines", nullptr},
             {"steadyStateMapAllocations", warmAllocations},
             {"recordedPlan", recorded}};
+}
+static void automaticScene(RasterFixture &gpu) {
+    D3D12SceneInterceptor interceptor(gpu.device.Get(), gpu.queue.Get());
+    interceptor.target(512, 768, 1);
+    auto target = gpu.target(512, 768);
+    Json cases = Json::array();
+    auto measure = [&](bool enabled, float scale, bool foreign, bool partial, bool primitiveMax = false) {
+        FFRSettings settings;
+        settings.enabled = true;
+        std::array<FFRPlan, 2> plans;
+        for (int eye = 0; eye < 2; ++eye)
+            plans[eye] =
+                makeFFRPlan(runtime::original[eye], reduce(runtime::original[eye], scale, scale), settings);
+        interceptor.update(plans, enabled);
+        double total = 0;
+        for (int frame = 0; frame < 20; ++frame) {
+            gpu.openScene();
+            if (foreign) {
+                ComPtr<ID3D12GraphicsCommandList5> v5;
+                check(gpu.scene.As(&v5));
+                v5->RSSetShadingRate(D3D12_SHADING_RATE_2X2, nullptr);
+            }
+            if (primitiveMax) {
+                ComPtr<ID3D12GraphicsCommandList5> v5;
+                check(gpu.scene.As(&v5));
+                D3D12_SHADING_RATE_COMBINER c[]{D3D12_SHADING_RATE_COMBINER_MAX,
+                                                D3D12_SHADING_RATE_COMBINER_PASSTHROUGH};
+                v5->RSSetShadingRate(D3D12_SHADING_RATE_1X1, c);
+            }
+            gpu.scene->BeginQuery(gpu.statistics.Get(), D3D12_QUERY_TYPE_PIPELINE_STATISTICS, 0);
+            gpu.draw(target.Get(), partial ? XrRect2Di{{0, 0}, {64, 64}} : XrRect2Di{{0, 0}, {512, 768}}, 0);
+            gpu.scene->EndQuery(gpu.statistics.Get(), D3D12_QUERY_TYPE_PIPELINE_STATISTICS, 0);
+            // A small viewport after an eligible scene draw must remain 1x1.
+            if (!foreign && !partial) {
+                gpu.scene->BeginQuery(gpu.statistics.Get(), D3D12_QUERY_TYPE_PIPELINE_STATISTICS, 1);
+                gpu.draw(target.Get(), {{0, 0}, {64, 64}}, 0);
+                gpu.scene->EndQuery(gpu.statistics.Get(), D3D12_QUERY_TYPE_PIPELINE_STATISTICS, 1);
+            }
+            gpu.scene->ResolveQueryData(gpu.statistics.Get(), D3D12_QUERY_TYPE_PIPELINE_STATISTICS, 0, 2,
+                                        gpu.results.Get(), 0);
+            gpu.submit(gpu.scene.Get());
+            check(gpu.queue->Signal(gpu.fence.Get(), ++gpu.serial));
+            gpu.wait();
+            void *data = nullptr;
+            D3D12_RANGE range{0, 256};
+            check(gpu.results->Map(0, &range, &data));
+            auto stats = static_cast<D3D12_QUERY_DATA_PIPELINE_STATISTICS *>(data);
+            if (frame >= 4)
+                total += stats[0].PSInvocations;
+            if (!foreign && !partial)
+                require(stats[1].PSInvocations >= 64 * 64,
+                        "Automatic scene VRS restores full rate before unrelated draws");
+            gpu.results->Unmap(0, nullptr);
+        }
+        double result = total / 16;
+        cases.push_back({{"enabled", enabled},
+                         {"scale", scale},
+                         {"foreignVrs", foreign},
+                         {"primitiveMax", primitiveMax},
+                         {"partialViewport", partial},
+                         {"meanPSInvocations", result},
+                         {"diagnostics", interceptor.diagnostics()}});
+        return result;
+    };
+    auto baseline = measure(false, .8f, false, false);
+    auto reduced = measure(true, .8f, false, false);
+    require(reduced < baseline * .9, "Automatic FFR reduces GPU workload without cooperation calls");
+    require(measure(true, .8f, false, false, true) < baseline * .9,
+            "RE Engine primitive MAX without an image permits automatic FFR");
+    measure(true, 1, false, false);
+    require(measure(true, .8f, false, true) >= 4096, "Partial/overlay viewport remains full rate");
+    auto foreign = measure(true, .8f, true, false);
+    require(foreign < baseline * .4, "Application-owned VRS is preserved");
+    auto observed = interceptor.diagnostics();
+    require(observed["drawsExecuted"].get<uint64_t>() > 0 &&
+                observed["foreignVrsSkipped"].get<uint64_t>() > 0,
+            "Observed execution and foreign VRS diagnostics");
+    require(observed["mapBuilds"] == 2, "Automatic maps are cached per geometry, not recomputed per draw");
+    gpu.validate();
+    std::filesystem::create_directories("ffr-evidence");
+    std::ofstream("ffr-evidence/automatic-d3d12.json") << cases.dump(2);
 }
 static void layerIntegration(RasterFixture &, const wchar_t *);
 int wmain(int argc, wchar_t **argv) {
@@ -420,6 +504,7 @@ int wmain(int argc, wchar_t **argv) {
         }
         results.push_back(benchmark(gpu, 1, 1, true, 75, 10, "conservative"));
         results.push_back(benchmark(gpu, .85f, .7f, true, 50, 20, "aggressive"));
+        automaticScene(gpu);
         layerIntegration(gpu, argv[1]);
         gpu.validate();
         updateJson(std::filesystem::current_path() / "ffr-evidence/benchmark.json", [&](Json &j) {
@@ -526,6 +611,23 @@ static void layerIntegration(RasterFixture &gpu, const wchar_t *dll) {
         require(XR_SUCCEEDED(proc<PFN_xrLocateViews>(g, instance, "xrLocateViews")(session, &locate, &state,
                                                                                    2, &count, views)),
                 "FFR authoritative views");
+        // Configuration is reloaded asynchronously. Observe the requested projection
+        // rather than assuming a single fixed sleep proves the worker has run.
+        for (int retry = 0; retry < 60; ++retry) {
+            auto expected = profile.edgeEnabled
+                                ? reduce(runtime::original[0], profile.horizontal, profile.vertical)
+                                : runtime::original[0];
+            if (same(views[0].fov, expected))
+                break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            require(XR_SUCCEEDED(proc<PFN_xrLocateViews>(g, instance, "xrLocateViews")(
+                        session, &locate, &state, 2, &count, views)),
+                    "Observe updated FOV profile");
+        }
+        auto expected = profile.edgeEnabled
+                            ? reduce(runtime::original[0], profile.horizontal, profile.vertical)
+                            : runtime::original[0];
+        require(same(views[0].fov, expected), "Profile reload reached requested FOV");
         XrSwapchainCreateInfo sc{XR_TYPE_SWAPCHAIN_CREATE_INFO};
         sc.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
         sc.format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -610,7 +712,8 @@ static void layerIntegration(RasterFixture &gpu, const wchar_t *dll) {
         require(XR_SUCCEEDED(proc<PFN_xrEndFrame>(g, instance, "xrEndFrame")(session, &frame)),
                 "FFR/reconstruction end frame");
         bool cropped = test == 1 || test == 2;
-        require((submittedFFR != runtime::source) == cropped, "FFR alone never invokes reconstruction");
+        require((submittedFFR != runtime::source) == (test != 3),
+                "Full mask and cropped Outside invoke reconstruction");
         ComPtr<ID3D12Resource> submittedImage;
         check(runtime::chains.at(submittedFFR).images[0].As(&submittedImage));
         gpu.capture(submittedImage.Get(), "layer-case-" + std::to_string(test));
@@ -619,7 +722,7 @@ static void layerIntegration(RasterFixture &gpu, const wchar_t *dll) {
                 "Layer effective mode matches actual FOV");
         evidence.push_back({{"case", test},
                             {"plan", ffrPlanJson(plan)},
-                            {"reconstructed", cropped},
+                            {"reconstructed", test != 3},
                             {"restoredFullRateDraw", true}});
         require(
             XR_SUCCEEDED(proc<PFN_xrDestroySwapchain>(g, instance, "xrDestroySwapchain")(runtime::source)),

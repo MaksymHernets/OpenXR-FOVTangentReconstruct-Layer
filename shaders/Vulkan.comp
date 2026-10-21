@@ -25,6 +25,9 @@ layout(std140, set = 0, binding = 2) uniform Parameters {
     float reserved1;
     float reserved2;
     vec4 fillColor;
+    vec4 outsideMask;
+    vec4 outsidePolicy;
+    vec4 centerMask;
     vec4 outputTangents;
     vec4 temporalSettings;
     vec4 adaptiveFallback;
@@ -49,11 +52,24 @@ bool finite2(vec2 x) {
 bool finite4(vec4 x) {
     return !any(isnan(x)) && !any(isinf(x));
 }
-vec4 sampleImage(vec2 uv) {
+float maskRadius(vec2 uv, vec2 radii, float shape) {
+    vec2 d=abs(uv-p.outsideMask.xy)/max(radii,vec2(.0001));
+    return shape>1.5 ? max(d.x,d.y) : length(d);
+}
+vec2 validObservation(vec2 uv) {
+    if(p.outsidePolicy.x>0) {
+        float r=maskRadius(uv,p.outsideMask.zw,p.outsidePolicy.x);
+        float guard=max(p.texel.x/p.sourceRect.z,p.texel.y/p.sourceRect.w)/min(p.outsideMask.z,p.outsideMask.w);
+        uv=p.outsideMask.xy+(uv-p.outsideMask.xy)*min(1,max(.5,1-guard)/max(r,.0001));
+    }
+    return uv;
+}
+vec4 originalSample(vec2 uv) {
     vec2 lo = p.sourceRect.xy + .5 * p.texel, hi = p.sourceRect.xy + p.sourceRect.zw - .5 * p.texel;
     return textureLod(sourceImage, vec3(clamp(p.sourceRect.xy + uv * p.sourceRect.zw, lo, hi), p.sourceSlice),
                       0);
 }
+vec4 sampleImage(vec2 uv) { return originalSample(validObservation(uv)); }
 vec4 historySample(uint i, vec2 uv) {
     switch (i) {
     case 0:
@@ -124,7 +140,8 @@ float metricDepth(uint i, vec2 uv) {
     return inverseDepth > 1e-6 ? 1 / inverseDepth : -1;
 }
 vec4 adaptiveBlur(vec2 q, float distance) {
-    vec2 edge = clamp(q, 0, 1);
+    if(p.outsidePolicy.w>0&&p.outsidePolicy.z>0)return p.fillColor;
+    vec2 edge = validObservation(clamp(q, 0, 1));
     float blend = smoothstep(0, max(p.adaptiveFallback.z, .001), distance);
     float radius = p.adaptiveFallback.x * mix(.35, 1, blend);
     vec4 sum = vec4(0);
@@ -181,6 +198,7 @@ vec4 temporalPixel(vec2 viewUV, vec2 q, float outsideDistance) {
                 continue;
         } else if (!inImage(uv))
             continue;
+        if(p.outsidePolicy.x>0&&maskRadius(uv,p.outsideMask.zw,p.outsidePolicy.x)>.98)continue;
         float angle = 2 * acos(clamp(abs(h.rotation.w), 0, 1));
         float translation = length(h.translationAge.xyz);
         float c = (depth ? .98 : .82) * exp(-h.translationAge.w / max(h.dimensions.w, .02)) *
@@ -244,6 +262,13 @@ vec4 reconstruct(vec2 uv) {
     vec2 q = uv * p.scale + p.bias;
     vec2 outside = max(max(-q, q - 1), 0);
     float distance = max(outside.x, outside.y);
+    if(p.outsidePolicy.x>0) {
+        float r=maskRadius(q,p.outsideMask.zw,p.outsidePolicy.x);
+        distance=max(0,r-1)*min(p.outsideMask.z,p.outsideMask.w);
+        if(distance<=0)return originalSample(q);
+        if(p.method==3)q=p.outsideMask.xy+(q-p.outsideMask.xy)*(max(0,2-r)/max(r,.0001));
+    }
+    if(p.outsidePolicy.w>0&&distance<=0)return originalSample(q);
     if (p.method == 5)
         return temporalPixel(uv, q, distance);
     if (p.borderFlag > 0 && all(greaterThan(q, vec2(-.01))) && all(lessThan(q, vec2(1.01))) &&
@@ -284,7 +309,25 @@ void main() {
     if (any(greaterThanEqual(pixel, p.destination.zw)))
         return;
     vec2 uv = (vec2(pixel) + .5) / vec2(p.destination.zw);
-    vec4 color = reconstruct(uv);
+    vec2 q=uv*p.scale+p.bias;
+    vec2 cropped=max(max(-q,q-1),0);
+    bool crop=max(cropped.x,cropped.y)>0;
+    bool outside=crop||(p.outsidePolicy.x>0&&maskRadius(q,p.outsideMask.zw,p.outsidePolicy.x)>1);
+    uint debug=uint(p.outsidePolicy.y);
+    vec4 color=reconstruct(uv);
+    if(!finite4(color)) {
+        float d=max(max(cropped.x,cropped.y),.001);
+        color=p.outsidePolicy.z>0?p.fillColor:adaptiveBlur(q,d);
+        if(!finite4(color))color=p.fillColor;
+    }
+    if(debug==5)color=originalSample(uv);
+    if(debug>=1&&debug<=4) {
+        bool center=maskRadius(q,p.centerMask.xy+p.centerMask.zz,p.centerMask.w)<=1;
+        bool selected=debug==1?(!outside&&center):debug==2?(!outside&&!center):debug==3?outside:crop;
+        color=selected?vec4(debug==1?vec3(0,1,.5):debug==2?vec3(1,.6,0):vec3(1,0,1),1):vec4(0,0,0,1);
+    }
+    if(debug==7&&outside)color=p.fillColor;
+    if(debug==6&&!outside)color=vec4(0,0,0,1);
     if (p.outputFlags.y != 0)
         color.rgb = srgb(color.rgb);
     if (p.outputFlags.z != 0)

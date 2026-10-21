@@ -1,0 +1,7 @@
+Test project D:/MyProjects/Codex/OpenXR_FOVFill_layer/build-018
+    Start 27: gui_localization
+1/1 Test #27: gui_localization .................   Passed    0.17 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   0.20 sec

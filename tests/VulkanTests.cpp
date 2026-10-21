@@ -21,7 +21,7 @@ static XrSwapchainCreateInfo info(vkTest::Image &im, bool storage = false) {
 static ShaderConstants shader(vkTest::Image &source, Profile p, uint32_t eye) {
     XrFovf original{-std::atan(1.f), std::atan(1.f), std::atan(1.f), -std::atan(1.f)};
     XrCompositionLayerProjectionView view{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW};
-    view.fov = reduce(original, .8f, .8f);
+    view.fov = reduce(original, p.horizontal, p.vertical);
     view.subImage = {XR_NULL_HANDLE, {{0, 0}, {int(source.width), int(source.height)}}, eye};
     auto c = constants(view, original, info(source), p, vulkanSrgb(source.format));
     return c;
@@ -36,7 +36,8 @@ static TemporalFrame frame(XrTime time) {
     f.trackingValid = true;
     return f;
 }
-static void algorithms(vkTest::Device &device, IEdgeRenderer &renderer, VkFormat format, bool storage) {
+static void algorithms(vkTest::Device &device, IEdgeRenderer &renderer, VkFormat format, bool storage,
+                       bool fullMask = false) {
     auto &source = device.image(64, 64, 2, format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
     auto &output =
         device.image(128, 128, 2, format,
@@ -44,6 +45,14 @@ static void algorithms(vkTest::Device &device, IEdgeRenderer &renderer, VkFormat
     std::vector<uint32_t> pixels(64 * 64 * 2);
     for (size_t i = 0; i < pixels.size(); ++i)
         pixels[i] = i < 64 * 64 ? 0xff204080 : 0xff804020;
+    if (fullMask)
+        for (int eye = 0; eye < 2; ++eye)
+            for (int y = 0; y < 64; ++y)
+                for (int x = 0; x < 64; ++x) {
+                    float dx = ((x + .5f) / 64 - .5f) / .35f, dy = ((y + .5f) / 64 - .5f) / .35f;
+                    if (dx * dx + dy * dy > 1)
+                        pixels[eye * 64 * 64 + y * 64 + x] = 0xff000000;
+                }
     device.upload(source, pixels);
     renderer.captureVulkan(1, {source.handle, info(source), source.layout});
     TemporalHistory history;
@@ -54,6 +63,11 @@ static void algorithms(vkTest::Device &device, IEdgeRenderer &renderer, VkFormat
     for (int method = 0; method < 6; ++method) {
         Profile p;
         p.method = method;
+        if (fullMask) {
+            p.horizontal = p.vertical = 1;
+            p.ffr.enabled = true;
+            p.ffr.middleX = p.ffr.middleY = .35f;
+        }
         p.color = {.5f, .25f, .75f};
         for (uint32_t eye : {1u, 0u})
             renderer.renderVulkan(1, {output.handle, info(output, storage), output.layout},
@@ -76,7 +90,7 @@ static void algorithms(vkTest::Device &device, IEdgeRenderer &renderer, VkFormat
                                       : 191)) <= 1,
                     "Vulkan solid color and sRGB display encoding");
         } else
-            require(result[0] == pixels[0] && result[128 * 128] == pixels[64 * 64],
+            require(result[0] == pixels[32 * 64 + 32] && result[128 * 128] == pixels[64 * 64 + 32 * 64 + 32],
                     "Vulkan edges preserve independent eye colors");
     }
     renderer.forget(1);
@@ -292,6 +306,10 @@ int main() {
                             VK_FORMAT_B8G8R8A8_SRGB})
             algorithms(device, *renderer, format, false);
         algorithms(device, *renderer, VK_FORMAT_R8G8B8A8_UNORM, true);
+        for (auto format : {VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8A8_UNORM,
+                            VK_FORMAT_B8G8R8A8_SRGB})
+            algorithms(device, *renderer, format, false, true);
+        algorithms(device, *renderer, VK_FORMAT_R8G8B8A8_UNORM, true, true);
         for (uint32_t eye = 0; eye < 2; eye++)
             for (int mode = 0; mode < 10; mode++)
                 temporal(device, *renderer, eye, mode);

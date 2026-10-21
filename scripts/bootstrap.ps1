@@ -16,3 +16,7 @@ if (!(Test-Path external/glslang/bin/glslang.exe)) {
     }
     Expand-Archive -LiteralPath $compilerArchive -DestinationPath external/glslang -Force
 }
+
+& (Join-Path $PSScriptRoot 'bootstrap-nvapi.ps1')
+
+& (Join-Path $PSScriptRoot 'bootstrap-minhook.ps1')

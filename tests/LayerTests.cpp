@@ -17,7 +17,7 @@ namespace runtime {
 uintptr_t next = 100;
 ComPtr<ID3D11Device> device;
 bool d3d12 = false;
-bool temporal = false;
+bool temporal = false, depthOnly = false;
 bool trackingValid = true, spaceValid = true;
 XrTime referenceChange = 0;
 XrSession lastSession{};
@@ -235,13 +235,14 @@ XrResult XRAPI_CALL gipa(XrInstance, const char *name, PFN_xrVoidFunction *out) 
     MAP(DestroySpace, destroySpace)
     MAP(BeginSession, beginSession)
     MAP(EndSession, endSession)
-    MAP(PollEvent, pollEvent) MAP(LocateViews, locate) MAP(EnumerateViewConfigurationViews, enumerateViews)
-        MAP(CreateSwapchain, createSwapchain) MAP(DestroySwapchain, destroySwapchain)
-            MAP(EnumerateSwapchainImages, enumerateImages) MAP(AcquireSwapchainImage, acquire)
-                MAP(WaitSwapchainImage, wait) MAP(ReleaseSwapchainImage, release) MAP(EndFrame, end)
-                    MAP(GetInstanceProperties, extra)
+    MAP(PollEvent, pollEvent)
+    MAP(LocateViews, locate)
+    MAP(EnumerateViewConfigurationViews, enumerateViews) MAP(CreateSwapchain, createSwapchain)
+        MAP(DestroySwapchain, destroySwapchain) MAP(EnumerateSwapchainImages, enumerateImages)
+            MAP(AcquireSwapchainImage, acquire) MAP(WaitSwapchainImage, wait)
+                MAP(ReleaseSwapchainImage, release) MAP(EndFrame, end) MAP(GetInstanceProperties, extra)
 #undef MAP
-                        *out = nullptr;
+                    *out = nullptr;
     return XR_ERROR_FUNCTION_UNSUPPORTED;
 }
 XrResult XRAPI_CALL createInstance(const XrInstanceCreateInfo *, const XrApiLayerCreateInfo *info,
@@ -263,6 +264,7 @@ int wmain(int argc, wchar_t **argv) {
         for (int argument = 2; argument < argc; argument++) {
             runtime::d3d12 |= !wcscmp(argv[argument], L"--d3d12");
             runtime::temporal |= !wcscmp(argv[argument], L"--temporal");
+            runtime::depthOnly |= !wcscmp(argv[argument], L"--depth-only");
         }
         auto dir = std::filesystem::current_path() /
                    (runtime::temporal
@@ -318,7 +320,7 @@ int wmain(int argc, wchar_t **argv) {
         strcpy_s(ci.applicationInfo.applicationName, "FOV integration test");
         ci.applicationInfo.apiVersion = XR_CURRENT_API_VERSION;
         const char *depthExtension = XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME;
-        if (runtime::temporal) {
+        if (runtime::temporal || runtime::depthOnly) {
             ci.enabledExtensionCount = 1;
             ci.enabledExtensionNames = &depthExtension;
         }
@@ -425,7 +427,7 @@ int wmain(int argc, wchar_t **argv) {
         runtime::timeout = true;
         renderFrame(1, false, runtime::temporal);
         renderFrame(2, true, runtime::temporal);
-        renderFrame(3, runtime::temporal, true);
+        renderFrame(3, runtime::temporal || runtime::depthOnly, true);
         renderFrame(4, true, runtime::temporal);
         if (runtime::temporal)
             for (int frame = 5; frame <= 12; frame++)
@@ -457,19 +459,43 @@ int wmain(int argc, wchar_t **argv) {
         }
         // Connect to the real local diagnostic service. No GUI is needed for history/config.
         std::this_thread::sleep_for(std::chrono::milliseconds(550));
-        WIN32_FIND_DATAW pipeData{};
+        // A running manager may briefly own the single-instance pipe. Also select
+        // the session-bearing instance rather than another instance's Starting pipe.
+        Json diagnostics;
         auto pattern = L"\\\\.\\pipe\\OpenXRFovExtension-" + std::to_wstring(GetCurrentProcessId()) + L"-*";
-        HANDLE find = FindFirstFileW(pattern.c_str(), &pipeData);
-        require(find != INVALID_HANDLE_VALUE, "Diagnostic pipe discovery");
-        FindClose(find);
-        auto pipePath = std::wstring(L"\\\\.\\pipe\\") + pipeData.cFileName;
-        HANDLE pipe = CreateFileW(pipePath.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING, 0, nullptr);
-        require(pipe != INVALID_HANDLE_VALUE, "Diagnostic pipe connection");
-        char payload[16384];
-        DWORD read = 0;
-        require(ReadFile(pipe, payload, sizeof(payload), &read, nullptr) && read > 0, "Receive diagnostics");
-        CloseHandle(pipe);
-        auto diagnostics = Json::parse(std::string(payload, read));
+        auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(4);
+        do {
+            WIN32_FIND_DATAW pipeData{};
+            HANDLE find = FindFirstFileW(pattern.c_str(), &pipeData);
+            if (find != INVALID_HANDLE_VALUE) {
+                do {
+                    auto pipePath = std::wstring(L"\\\\.\\pipe\\") + pipeData.cFileName;
+                    HANDLE pipe =
+                        CreateFileW(pipePath.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+                    if (pipe == INVALID_HANDLE_VALUE)
+                        continue;
+                    char payload[32768];
+                    DWORD bytes = 0;
+                    bool received = ReadFile(pipe, payload, sizeof(payload), &bytes, nullptr) && bytes > 0;
+                    CloseHandle(pipe);
+                    if (received)
+                        try {
+                            auto candidate = Json::parse(std::string(payload, bytes));
+                            if (candidate.value("graphicsApi", "") == (runtime::d3d12 ? "D3D12" : "D3D11") &&
+                                candidate.contains("ffr")) {
+                                diagnostics = std::move(candidate);
+                                break;
+                            }
+                        } catch (...) {
+                        }
+                } while (FindNextFileW(find, &pipeData));
+                FindClose(find);
+            }
+            if (!diagnostics.empty())
+                break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        } while (std::chrono::steady_clock::now() < deadline);
+        require(!diagnostics.empty(), "Receive active-session diagnostics alongside a running manager");
         if (runtime::temporal) {
             auto status = diagnostics.at("temporalDepth");
             require(status.is_array() && status.size() == 2 && status[0].value("depthAvailable", false) &&

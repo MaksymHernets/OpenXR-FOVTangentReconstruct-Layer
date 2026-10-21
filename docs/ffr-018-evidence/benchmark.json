@@ -1,0 +1,566 @@
+{
+  "adapter": "NVIDIA GeForce RTX 4060",
+  "cases": [
+    {
+      "cpuRecordSubmitMeanMs": 0.11643124999999999,
+      "ffr": false,
+      "fixtureCpuFenceWaitMeanMs": 0.19545,
+      "frameGpuP50Ms": 0.22016,
+      "frameGpuP95Ms": 0.221184,
+      "frameGpuP99Ms": 0.221184,
+      "frameGpuTimelineMeanMs": 0.22054399999999985,
+      "headsetMissedDeadlines": null,
+      "meanPixelShaderInvocations": 786432.0,
+      "measuredFrames": 64,
+      "middleQuality": 65,
+      "missed120HzTimelineBudgets": 0,
+      "missed90HzTimelineBudgets": 0,
+      "mode": "TwoRenderedZonesWithOutside",
+      "name": "full-baseline-q65",
+      "outputDimensions": [
+        1024,
+        768
+      ],
+      "outsideSceneSavings": 0,
+      "outsideSceneSuppression": false,
+      "policy": "balanced",
+      "postSceneGpuTimelineMeanMs": 0.003774999999999998,
+      "recordedPlan": null,
+      "scale": [
+        1.0,
+        1.0
+      ],
+      "sceneGpuMeanMs": 0.21676900000000007,
+      "sourceDimensions": [
+        1024,
+        768
+      ],
+      "steadyStateMapAllocations": 0,
+      "warmupFrames": 16
+    },
+    {
+      "centralPixelsMatchBaseline": true,
+      "cpuRecordSubmitMeanMs": 0.4104375000000002,
+      "ffr": true,
+      "fixtureCpuFenceWaitMeanMs": 0.0506234375,
+      "frameGpuP50Ms": 0.269312,
+      "frameGpuP95Ms": 0.27136,
+      "frameGpuP99Ms": 0.272384,
+      "frameGpuTimelineMeanMs": 0.269248,
+      "headsetMissedDeadlines": null,
+      "invocationReductionPercent": 15.8203125,
+      "meanPixelShaderInvocations": 662016.0,
+      "measuredFrames": 64,
+      "middleQuality": 65,
+      "missed120HzTimelineBudgets": 0,
+      "missed90HzTimelineBudgets": 0,
+      "mode": "TwoRenderedZonesWithOutside",
+      "name": "full-ffr-q65",
+      "outputDimensions": [
+        1024,
+        768
+      ],
+      "outsideSceneSavings": 0,
+      "outsideSceneSuppression": false,
+      "policy": "balanced",
+      "postSceneGpuTimelineMeanMs": 0.08047999999999997,
+      "recordedPlan": {
+        "activeFov": [
+          -0.6499999761581421,
+          0.8999999761581421,
+          0.800000011920929,
+          -0.699999988079071
+        ],
+        "center": [
+          0.37627124786376953,
+          0.5500420331954956
+        ],
+        "centerRadii": [
+          0.2199999988079071,
+          0.2199999988079071
+        ],
+        "cropIsRenderedZone": false,
+        "effectiveScale": [
+          1.0,
+          1.0
+        ],
+        "hardwareApplicationConfirmed": false,
+        "logicalRegions": 3,
+        "mapAllocated": false,
+        "middleQuality": 65,
+        "middleRadii": [
+          0.37627124786376953,
+          0.4000000059604645
+        ],
+        "mode": "TwoRenderedZonesWithOutside",
+        "outsideRegion": "peripheral-mask",
+        "outsideSceneSavings": 0,
+        "outsideSceneSuppression": false,
+        "recordedRates": [
+          "1x1",
+          "2x2"
+        ],
+        "renderedRect": [
+          0.0,
+          0.0,
+          1.0,
+          1.0
+        ],
+        "renderedZones": 2,
+        "runtimeBaselineFov": [
+          -0.6499999761581421,
+          0.8999999761581421,
+          0.800000011920929,
+          -0.699999988079071
+        ],
+        "state": "Scene commands recorded; execution not observed by layer",
+        "valid": true
+      },
+      "scale": [
+        1.0,
+        1.0
+      ],
+      "sceneGpuMeanMs": 0.18876800000000002,
+      "sourceDimensions": [
+        1024,
+        768
+      ],
+      "steadyStateMapAllocations": 0,
+      "warmupFrames": 16
+    },
+    {
+      "cpuRecordSubmitMeanMs": 0.31463281249999997,
+      "ffr": false,
+      "fixtureCpuFenceWaitMeanMs": 0.035871875000000004,
+      "frameGpuP50Ms": 0.259072,
+      "frameGpuP95Ms": 0.26112,
+      "frameGpuP99Ms": 0.32768,
+      "frameGpuTimelineMeanMs": 0.2605760000000001,
+      "headsetMissedDeadlines": null,
+      "meanPixelShaderInvocations": 567240.0,
+      "measuredFrames": 64,
+      "middleQuality": 65,
+      "missed120HzTimelineBudgets": 0,
+      "missed90HzTimelineBudgets": 0,
+      "mode": "TwoRenderedZonesWithCrop",
+      "name": "reduced-85-85-baseline-q65",
+      "outputDimensions": [
+        1024,
+        768
+      ],
+      "outsideSceneSavings": 0,
+      "outsideSceneSuppression": false,
+      "policy": "balanced",
+      "postSceneGpuTimelineMeanMs": 0.09680000000000011,
+      "recordedPlan": null,
+      "scale": [
+        0.8500000238418579,
+        0.8500000238418579
+      ],
+      "sceneGpuMeanMs": 0.16377600000000014,
+      "sourceDimensions": [
+        870,
+        652
+      ],
+      "steadyStateMapAllocations": 0,
+      "warmupFrames": 16
+    },
+    {
+      "centralPixelsMatchBaseline": true,
+      "cpuRecordSubmitMeanMs": 0.35887187499999995,
+      "ffr": true,
+      "fixtureCpuFenceWaitMeanMs": 0.19745312499999998,
+      "frameGpuP50Ms": 0.371712,
+      "frameGpuP95Ms": 0.375808,
+      "frameGpuP99Ms": 0.376832,
+      "frameGpuTimelineMeanMs": 0.3722560000000001,
+      "headsetMissedDeadlines": null,
+      "invocationReductionPercent": 56.5273958112968,
+      "meanPixelShaderInvocations": 246594.0,
+      "measuredFrames": 64,
+      "middleQuality": 65,
+      "missed120HzTimelineBudgets": 0,
+      "missed90HzTimelineBudgets": 0,
+      "mode": "TwoRenderedZonesWithCrop",
+      "name": "reduced-85-85-ffr-q65",
+      "outputDimensions": [
+        1024,
+        768
+      ],
+      "outsideSceneSavings": 0,
+      "outsideSceneSuppression": false,
+      "policy": "balanced",
+      "postSceneGpuTimelineMeanMs": 0.15308799999999995,
+      "recordedPlan": {
+        "activeFov": [
+          -0.5736806988716125,
+          0.8197303414344788,
+          0.7189391851425171,
+          -0.6213474273681641
+        ],
+        "center": [
+          0.37627124786376953,
+          0.5500420928001404
+        ],
+        "centerRadii": [
+          0.2199999988079071,
+          0.2199999988079071
+        ],
+        "cropIsRenderedZone": false,
+        "effectiveScale": [
+          0.8500000238418579,
+          0.8500000238418579
+        ],
+        "hardwareApplicationConfirmed": false,
+        "logicalRegions": 3,
+        "mapAllocated": false,
+        "middleQuality": 65,
+        "middleRadii": [
+          0.37627124786376953,
+          0.4000000059604645
+        ],
+        "mode": "TwoRenderedZonesWithCrop",
+        "outsideRegion": "projection-crop",
+        "outsideSceneSavings": 0,
+        "outsideSceneSuppression": false,
+        "recordedRates": [
+          "1x1",
+          "2x2"
+        ],
+        "renderedRect": [
+          0.05644068866968155,
+          0.08250626921653748,
+          0.8500000238418579,
+          0.8500000238418579
+        ],
+        "renderedZones": 2,
+        "runtimeBaselineFov": [
+          -0.6499999761581421,
+          0.8999999761581421,
+          0.800000011920929,
+          -0.699999988079071
+        ],
+        "state": "Scene commands recorded; execution not observed by layer",
+        "valid": true
+      },
+      "scale": [
+        0.8500000238418579,
+        0.8500000238418579
+      ],
+      "sceneGpuMeanMs": 0.21916799999999995,
+      "sourceDimensions": [
+        870,
+        652
+      ],
+      "steadyStateMapAllocations": 0,
+      "warmupFrames": 16
+    },
+    {
+      "cpuRecordSubmitMeanMs": 0.2981624999999999,
+      "ffr": false,
+      "fixtureCpuFenceWaitMeanMs": 0.9113515624999998,
+      "frameGpuP50Ms": 1.096704,
+      "frameGpuP95Ms": 1.098752,
+      "frameGpuP99Ms": 1.098752,
+      "frameGpuTimelineMeanMs": 1.0963680000000007,
+      "headsetMissedDeadlines": null,
+      "meanPixelShaderInvocations": 549888.0,
+      "measuredFrames": 64,
+      "middleQuality": 65,
+      "missed120HzTimelineBudgets": 0,
+      "missed90HzTimelineBudgets": 0,
+      "mode": "TwoRenderedZonesWithCrop",
+      "name": "reduced-70-100-baseline-q65",
+      "outputDimensions": [
+        1024,
+        768
+      ],
+      "outsideSceneSavings": 0,
+      "outsideSceneSuppression": false,
+      "policy": "balanced",
+      "postSceneGpuTimelineMeanMs": 0.3828799999999998,
+      "recordedPlan": null,
+      "scale": [
+        0.699999988079071,
+        1.0
+      ],
+      "sceneGpuMeanMs": 0.7134880000000005,
+      "sourceDimensions": [
+        716,
+        768
+      ],
+      "steadyStateMapAllocations": 0,
+      "warmupFrames": 16
+    },
+    {
+      "centralPixelsMatchBaseline": true,
+      "cpuRecordSubmitMeanMs": 0.37752031249999995,
+      "ffr": true,
+      "fixtureCpuFenceWaitMeanMs": 0.6562031250000002,
+      "frameGpuP50Ms": 0.815104,
+      "frameGpuP95Ms": 0.82432,
+      "frameGpuP99Ms": 1.137664,
+      "frameGpuTimelineMeanMs": 0.824256,
+      "headsetMissedDeadlines": null,
+      "invocationReductionPercent": 56.14525139664804,
+      "meanPixelShaderInvocations": 241152.0,
+      "measuredFrames": 64,
+      "middleQuality": 65,
+      "missed120HzTimelineBudgets": 0,
+      "missed90HzTimelineBudgets": 0,
+      "mode": "TwoRenderedZonesWithCrop",
+      "name": "reduced-70-100-ffr-q65",
+      "outputDimensions": [
+        1024,
+        768
+      ],
+      "outsideSceneSavings": 0,
+      "outsideSceneSuppression": false,
+      "policy": "balanced",
+      "postSceneGpuTimelineMeanMs": 0.33411199999999985,
+      "recordedPlan": {
+        "activeFov": [
+          -0.4890301823616028,
+          0.7228431701660156,
+          0.800000011920929,
+          -0.699999988079071
+        ],
+        "center": [
+          0.37627124786376953,
+          0.5500420331954956
+        ],
+        "centerRadii": [
+          0.2199999988079071,
+          0.2199999988079071
+        ],
+        "cropIsRenderedZone": false,
+        "effectiveScale": [
+          0.699999988079071,
+          1.0
+        ],
+        "hardwareApplicationConfirmed": false,
+        "logicalRegions": 3,
+        "mapAllocated": false,
+        "middleQuality": 65,
+        "middleRadii": [
+          0.37627124786376953,
+          0.4000000059604645
+        ],
+        "mode": "TwoRenderedZonesWithCrop",
+        "outsideRegion": "projection-crop",
+        "outsideSceneSavings": 0,
+        "outsideSceneSuppression": false,
+        "recordedRates": [
+          "1x1",
+          "2x2"
+        ],
+        "renderedRect": [
+          0.1128813773393631,
+          0.0,
+          0.699999988079071,
+          1.0
+        ],
+        "renderedZones": 2,
+        "runtimeBaselineFov": [
+          -0.6499999761581421,
+          0.8999999761581421,
+          0.800000011920929,
+          -0.699999988079071
+        ],
+        "state": "Scene commands recorded; execution not observed by layer",
+        "valid": true
+      },
+      "scale": [
+        0.699999988079071,
+        1.0
+      ],
+      "sceneGpuMeanMs": 0.4901440000000002,
+      "sourceDimensions": [
+        716,
+        768
+      ],
+      "steadyStateMapAllocations": 0,
+      "warmupFrames": 16
+    },
+    {
+      "cpuRecordSubmitMeanMs": 0.4084109375000001,
+      "ffr": true,
+      "fixtureCpuFenceWaitMeanMs": 2.5025000000000004,
+      "frameGpuP50Ms": 3.028992,
+      "frameGpuP95Ms": 3.03616,
+      "frameGpuP99Ms": 3.040256,
+      "frameGpuTimelineMeanMs": 2.524463999999998,
+      "headsetMissedDeadlines": null,
+      "meanPixelShaderInvocations": 786432.0,
+      "measuredFrames": 64,
+      "middleQuality": 75,
+      "missed120HzTimelineBudgets": 0,
+      "missed90HzTimelineBudgets": 0,
+      "mode": "TwoRenderedZonesWithOutside",
+      "name": "full-ffr-q75",
+      "outputDimensions": [
+        1024,
+        768
+      ],
+      "outsideSceneSavings": 0,
+      "outsideSceneSuppression": false,
+      "policy": "conservative",
+      "postSceneGpuTimelineMeanMs": 0.5844320000000003,
+      "recordedPlan": {
+        "activeFov": [
+          -0.6499999761581421,
+          0.8999999761581421,
+          0.800000011920929,
+          -0.699999988079071
+        ],
+        "center": [
+          0.37627124786376953,
+          0.5500420331954956
+        ],
+        "centerRadii": [
+          0.2199999988079071,
+          0.2199999988079071
+        ],
+        "cropIsRenderedZone": false,
+        "effectiveScale": [
+          1.0,
+          1.0
+        ],
+        "hardwareApplicationConfirmed": false,
+        "logicalRegions": 3,
+        "mapAllocated": false,
+        "middleQuality": 75,
+        "middleRadii": [
+          0.37627124786376953,
+          0.4000000059604645
+        ],
+        "mode": "TwoRenderedZonesWithOutside",
+        "outsideRegion": "peripheral-mask",
+        "outsideSceneSavings": 0,
+        "outsideSceneSuppression": false,
+        "recordedRates": [
+          "1x1",
+          "1x1"
+        ],
+        "renderedRect": [
+          0.0,
+          0.0,
+          1.0,
+          1.0
+        ],
+        "renderedZones": 2,
+        "runtimeBaselineFov": [
+          -0.6499999761581421,
+          0.8999999761581421,
+          0.800000011920929,
+          -0.699999988079071
+        ],
+        "state": "Scene commands recorded; execution not observed by layer",
+        "valid": true
+      },
+      "scale": [
+        1.0,
+        1.0
+      ],
+      "sceneGpuMeanMs": 1.9400320000000004,
+      "sourceDimensions": [
+        1024,
+        768
+      ],
+      "steadyStateMapAllocations": 0,
+      "warmupFrames": 16
+    },
+    {
+      "cpuRecordSubmitMeanMs": 0.361109375,
+      "ffr": true,
+      "fixtureCpuFenceWaitMeanMs": 0.02320468750000001,
+      "frameGpuP50Ms": 0.238592,
+      "frameGpuP95Ms": 0.24576,
+      "frameGpuP99Ms": 0.247808,
+      "frameGpuTimelineMeanMs": 0.23892800000000006,
+      "headsetMissedDeadlines": null,
+      "meanPixelShaderInvocations": 203711.0,
+      "measuredFrames": 64,
+      "middleQuality": 50,
+      "missed120HzTimelineBudgets": 0,
+      "missed90HzTimelineBudgets": 0,
+      "mode": "TwoRenderedZonesWithCrop",
+      "name": "reduced-85-70-ffr-q50",
+      "outputDimensions": [
+        1024,
+        768
+      ],
+      "outsideSceneSavings": 0,
+      "outsideSceneSuppression": false,
+      "policy": "aggressive",
+      "postSceneGpuTimelineMeanMs": 0.16902399999999998,
+      "recordedPlan": {
+        "activeFov": [
+          -0.5736806988716125,
+          0.8197303414344788,
+          0.6245148181915283,
+          -0.5327387452125549
+        ],
+        "center": [
+          0.37627124786376953,
+          0.5500420928001404
+        ],
+        "centerRadii": [
+          0.2199999988079071,
+          0.2199999988079071
+        ],
+        "cropIsRenderedZone": false,
+        "effectiveScale": [
+          0.8500000238418579,
+          0.6999999284744263
+        ],
+        "hardwareApplicationConfirmed": false,
+        "logicalRegions": 3,
+        "mapAllocated": false,
+        "middleQuality": 50,
+        "middleRadii": [
+          0.37627124786376953,
+          0.4000000059604645
+        ],
+        "mode": "TwoRenderedZonesWithCrop",
+        "outsideRegion": "projection-crop",
+        "outsideSceneSavings": 0,
+        "outsideSceneSuppression": false,
+        "recordedRates": [
+          "1x1",
+          "2x2"
+        ],
+        "renderedRect": [
+          0.05644068866968155,
+          0.1650126427412033,
+          0.8500000238418579,
+          0.6999999284744263
+        ],
+        "renderedZones": 2,
+        "runtimeBaselineFov": [
+          -0.6499999761581421,
+          0.8999999761581421,
+          0.800000011920929,
+          -0.699999988079071
+        ],
+        "state": "Scene commands recorded; execution not observed by layer",
+        "valid": true
+      },
+      "scale": [
+        0.8500000238418579,
+        0.699999988079071
+      ],
+      "sceneGpuMeanMs": 0.06990399999999998,
+      "sourceDimensions": [
+        870,
+        537
+      ],
+      "steadyStateMapAllocations": 0,
+      "warmupFrames": 16
+    }
+  ],
+  "d3d12DebugLayer": true,
+  "hardwareApplicationConfirmedByPipelineStatistics": true,
+  "headsetRuntimeTested": false,
+  "hubrisTested": false
+}

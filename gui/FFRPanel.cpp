@@ -37,7 +37,7 @@ class FFRPreview : public QWidget {
                         int zone = fov::ffrZone(p, (u - r[0]) / r[2], (v - r[1]) / r[3]);
                         color = zone == 1   ? QColor("#27cfa7")
                                 : zone == 2 ? QColor("#f5b64c")
-                                            : QColor("#e66058");
+                                            : QColor("#a94fcb");
                         if (p.settings.debug && (x % 20 == 0 || y % 20 == 0))
                             color = Qt::white;
                     }
@@ -87,7 +87,7 @@ FFRPanel::FFRPanel(QWidget *parent) : QWidget(parent) {
         return w;
     };
     form->addRow("Center radii X / Y", pair(centerX, centerY));
-    form->addRow("Middle radii X / Y", pair(middleX, middleY));
+    form->addRow("Outside boundary / middle radii X / Y", pair(middleX, middleY));
     form->addRow("Center offset X / Y", pair(offsetX, offsetY));
     form->addRow("Transition band", transition);
     auto quality = [](const char *name, int lo, int hi) {
@@ -99,13 +99,10 @@ FFRPanel::FFRPanel(QWidget *parent) : QWidget(parent) {
     };
     fullQuality = quality("ffrFullMiddle", 50, 75);
     reducedQuality = quality("ffrReducedMiddle", 50, 75);
-    outerQuality = quality("ffrOuter", 10, 20);
     fullLabel = new QLabel("Middle quality — full FOV");
     reducedLabel = new QLabel("Middle quality — reduced FOV");
-    outerLabel = new QLabel("Outer quality");
     form->addRow(fullLabel, fullQuality);
     form->addRow(reducedLabel, reducedQuality);
-    form->addRow(outerLabel, outerQuality);
     geometry = new QComboBox;
     geometry->setObjectName("ffrGeometry");
     geometry->addItems({"Elliptical", "Rectangular"});
@@ -117,6 +114,16 @@ FFRPanel::FFRPanel(QWidget *parent) : QWidget(parent) {
     debug = new QCheckBox("Colored peripheral test grid");
     debug->setObjectName("ffrDebug");
     form->addRow(debug);
+    debugView = new QComboBox;
+    debugView->setObjectName("ffrDebugView");
+    debugView->addItems({"Final composite", "Center VRS region", "Middle VRS region", "Outside mask",
+                         "Actual cropped FOV", "Reconstruction input", "Reconstruction output",
+                         "Diagnostic Outside color fill"});
+    form->addRow("Diagnostic view", debugView);
+    fallback = new QComboBox;
+    fallback->setObjectName("ffrFallback");
+    fallback->addItems({"Adaptive Blur Fallback", "Solid Color"});
+    form->addRow("Outside safe fallback", fallback);
     reconstruction = new QLabel;
     reconstruction->setObjectName("ffrReconstruction");
     form->addRow(reconstruction);
@@ -124,17 +131,16 @@ FFRPanel::FFRPanel(QWidget *parent) : QWidget(parent) {
     support->setObjectName("ffrSupport");
     support->setWordWrap(true);
     form->addRow(support);
-    layout->addWidget(new QLabel(
-        "Green: center 100% · Amber: middle · Red: rendered outer zone · Purple: cropped reconstruction"));
+    layout->addWidget(new QLabel("Green: center 100% · Amber: middle · Purple: Outside reconstruction"));
     preview = new FFRPreview;
     layout->addWidget(preview);
     layout->addWidget(new QLabel("Configured map preview; hardware application is not confirmed by this "
                                  "preview. Quality targets are not literal shading-rate percentages."));
     for (auto spin : {centerX, centerY, middleX, middleY, offsetX, offsetY, transition})
         connect(spin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, [this] { updateView(); });
-    for (auto spin : {fullQuality, reducedQuality, outerQuality})
+    for (auto spin : {fullQuality, reducedQuality})
         connect(spin, qOverload<int>(&QSpinBox::valueChanged), this, [this] { updateView(); });
-    for (auto combo : {geometry, policy})
+    for (auto combo : {geometry, policy, debugView, fallback})
         connect(combo, qOverload<int>(&QComboBox::currentIndexChanged), this, [this] { updateView(); });
     for (auto box : {enabled, debug})
         connect(box, &QCheckBox::toggled, this, [this] { updateView(); });
@@ -155,7 +161,8 @@ fov::FFRSettings FFRPanel::settings() const {
     s.transition = float(transition->value());
     s.fullMiddleQuality = fullQuality->value();
     s.reducedMiddleQuality = reducedQuality->value();
-    s.outerQuality = outerQuality->value();
+    s.debugView = debugView->currentIndex();
+    s.outsideFallback = fallback->currentIndex();
     s.geometry = geometry->currentIndex() == 0 ? "ellipse" : "rectangle";
     const char *policies[]{"conservative", "balanced", "aggressive"};
     s.policy = policies[std::max(0, policy->currentIndex())];
@@ -176,7 +183,8 @@ void FFRPanel::setSettings(const fov::FFRSettings &s) {
     transition->setValue(s.transition);
     fullQuality->setValue(s.fullMiddleQuality);
     reducedQuality->setValue(s.reducedMiddleQuality);
-    outerQuality->setValue(s.outerQuality);
+    debugView->setCurrentIndex(s.debugView);
+    fallback->setCurrentIndex(s.outsideFallback);
     geometry->setCurrentIndex(s.geometry == "rectangle" ? 1 : 0);
     policy->setCurrentIndex(s.policy == "conservative" ? 0 : s.policy == "aggressive" ? 2 : 1);
     updating = false;
@@ -225,19 +233,18 @@ void FFRPanel::updateView() {
         preview->plans = {plan, plan};
     bool full = false, reduced = false;
     for (auto &p : preview->plans) {
-        full |= p.mode == fov::FFRZoneMode::ThreeRenderedZones;
+        full |= p.mode == fov::FFRZoneMode::TwoRenderedZonesWithOutside;
         reduced |= p.mode == fov::FFRZoneMode::TwoRenderedZonesWithCrop;
     }
-    outerQuality->setVisible(full);
-    outerLabel->setVisible(full);
     fullQuality->setVisible(full);
     fullLabel->setVisible(full);
     reducedQuality->setVisible(reduced);
     reducedLabel->setVisible(reduced);
-    reconstruction->setVisible(reduced);
+    reconstruction->setVisible(true);
     mode->setText(translate(full && reduced ? "Per-eye mixed zone modes"
-                            : full          ? "Three rendered zones"
-                                            : "Two rendered zones + cropped reconstruction"));
+                            : full
+                                ? "Center 100% → Middle Reduced Quality → Outside Reconstruction"
+                                : "Center 100% → Middle Reduced Quality → Cropped Outside Reconstruction"));
     if (live) {
         auto a = preview->plans[0], b = preview->plans[1];
         effective->setText(translate("Observed effective FOV — L %1 / %2 · R %3 / %4")
@@ -249,7 +256,7 @@ void FFRPanel::updateView() {
     } else
         effective->setText(translate("Effective FOV unavailable; showing configured preview"));
     reconstruction->setText(
-        translate("Cropped region → existing reconstruction: %1")
+        translate("Outside → existing reconstruction: %1")
             .arg(live ? QString::fromStdString(observed.value("reconstructionMode", std::string("unknown")))
                       : algorithm));
     if (live && !observed.value("reconstructionAvailable", false))
@@ -265,9 +272,26 @@ void FFRPanel::updateView() {
                                     .arg(item.value("eye", 0))
                                     .arg(QString::fromStdString(item["recordedRates"].dump()));
             }
-    support->setText(translate(!live      ? "Backend support unavailable without a live session"
-                               : hardware ? "D3D12 Tier 2 available; explicit scene integration required"
-                                          : "Hardware FFR unsupported for the current integration") +
+    support->setText(translate(!live ? "Backend support unavailable without a live session"
+                               : hardware
+                                   ? (c.value("integrationRequired", true)
+                                          ? "Hardware VRS available; explicit scene integration required"
+                                          : "Automatic D3D12 scene interception installed")
+                                   : "Hardware FFR unsupported for the current integration") +
                      "\n" + rates);
+    support->setText(support->text() + "\n" +
+                     translate("Outside rendering suppression: unavailable; scene savings 0%"));
+    if (live) {
+        support->setText(support->text() + "\n" +
+                         QString::fromStdString(c.value("backend", std::string("unknown"))) + ": " +
+                         QString::fromStdString(c.value("supportedRates", fov::Json::array()).dump()));
+    }
+    auto automatic = observed.value("automaticScene", fov::Json::object());
+    if (automatic.value("installed", false))
+        support->setText(support->text() + "\n" +
+                         translate("Automatic VRS: %1 recorded draws; %2 GPU-executed draws")
+                             .arg(automatic.value("drawsRecorded", uint64_t(0)))
+                             .arg(automatic.value("drawsExecuted", uint64_t(0))) +
+                         "\n" + QString::fromStdString(automatic.value("reason", std::string{})));
     preview->update();
 }

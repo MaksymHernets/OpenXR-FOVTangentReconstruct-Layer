@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-10-21T17:54:48Z",
+  "status": "Reconstructing",
+  "graphicsApi": "D3D12",
+  "lastError": "",
+  "fovMatched": true,
+  "ffrAutomaticScene": {
+    "backend": "Automatic D3D12 Tier 2 scene interception",
+    "candidateDraws": 51239,
+    "drawsExecuted": 46980,
+    "drawsRecorded": 46985,
+    "enabled": true,
+    "executionConfirmedByFence": true,
+    "eyeMapping": "Conservative union of both per-eye full-quality centers; packed targets use per-eye halves",
+    "foreignVrsSkipped": 0,
+    "immutableMaps": 4,
+    "installed": true,
+    "lastForeignVrsState": {},
+    "mapBuilds": 4,
+    "observedRtvDescriptors": 191,
+    "outsideSceneSuppression": false,
+    "reason": "Automatic D3D12 scene draws recorded",
+    "targetDimensions": [
+      [
+        1997,
+        2151
+      ]
+    ],
+    "trackedCommandLists": 70
+  },
+  "requestedFov": [
+    [
+      -0.7615483999252319,
+      0.591189444065094,
+      0.6577782034873962,
+      -0.8703009486198425
+    ],
+    [
+      -0.591189444065094,
+      0.7615483999252319,
+      0.6577782034873962,
+      -0.8703009486198425
+    ]
+  ],
+  "submittedFov": [
+    [
+      -0.8726646304130554,
+      0.6981316804885864,
+      0.767944872379303,
+      -0.9773843884468079
+    ],
+    [
+      -0.6981316804885864,
+      0.8726646304130554,
+      0.767944872379303,
+      -0.9773843884468079
+    ]
+  ],
+  "application": "Resident Evil 3 Remake VR mod",
+  "runtime": "Virtual Desktop OpenXR",
+  "toolkitLoaded": false,
+  "layerVersion": "0.1.8",
+  "headsetVisualConfirmed": true,
+  "gameFpsMeasured": false,
+  "settings": {
+    "horizontalFov": 0.8,
+    "verticalFov": 0.8,
+    "reconstruction": "blur",
+    "ffrEnabled": true
+  },
+  "evidenceScope": "Queue-fence completion proves recorded VRS commands executed; game shader invocations and FPS were not measured.",
+  "headsetObservation": "User confirmed both eyes look correct while checking the running corrected 0.1.8 FFR setup.",
+  "layerDllSha256": "c52e3931553acbbee63cf7009799fe9758af03a79e566856904f3cfb192aeba7"
+}
