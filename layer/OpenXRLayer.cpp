@@ -2,6 +2,8 @@
 #include "common/FovMath.h"
 #include "renderer/IEdgeRenderer.h"
 #include "IPCServer.h"
+#include "VulkanCooperation.h"
+#include "renderer/VulkanContext.h"
 #include <deque>
 #include <map>
 #include <mutex>
@@ -10,6 +12,7 @@
 #include <cstring>
 #include <tuple>
 #include <set>
+#include <chrono>
 namespace fov {
 #define DISPATCH_FUNCTIONS(X)                                                                                \
     X(DestroyInstance)                                                                                       \
@@ -17,9 +20,11 @@ namespace fov {
     X(DestroySession)                                                                                        \
     X(LocateViews)                                                                                           \
     X(EnumerateViewConfigurationViews)                                                                       \
-    X(CreateSwapchain) X(DestroySwapchain) X(EnumerateSwapchainImages) X(AcquireSwapchainImage)              \
-        X(WaitSwapchainImage) X(ReleaseSwapchainImage) X(EndFrame) X(BeginSession) X(EndSession)             \
-            X(PollEvent)
+    X(CreateSwapchain)                                                                                       \
+    X(DestroySwapchain)                                                                                      \
+    X(EnumerateSwapchainImages)                                                                              \
+    X(AcquireSwapchainImage)                                                                                 \
+    X(WaitSwapchainImage) X(ReleaseSwapchainImage) X(EndFrame) X(BeginSession) X(EndSession) X(PollEvent)
 struct Instance {
     XrInstance handle{};
     PFN_xrGetInstanceProcAddr gipa{};
@@ -29,6 +34,7 @@ struct Instance {
     std::shared_ptr<IPCServer> ipc;
     Profile startup;
     bool depthExtension = false;
+    bool vulkanExtension = false;
     PFN_xrCreateReferenceSpace CreateReferenceSpace{};
     PFN_xrLocateSpace LocateSpace{};
     PFN_xrDestroySpace DestroySpace{};
@@ -45,6 +51,10 @@ struct Session {
     std::shared_ptr<Instance> instance;
     std::unique_ptr<IEdgeRenderer> renderer;
     std::string api = "Unsupported";
+    std::unique_ptr<VulkanContext> vulkan;
+    bool vulkanCooperating = false;
+    bool vulkanDeviceLost = false;
+    std::string vulkanReason = "Vulkan synchronization contract absent: diagnostic passthrough";
     std::deque<Located> located;
     using HistoryKey = std::tuple<uint64_t, uint64_t, uint32_t, uint32_t, uint32_t, int, int, int, int>;
     std::map<HistoryKey, TemporalHistory> histories;
@@ -55,6 +65,7 @@ struct Session {
 struct Acquisition {
     uint32_t index;
     bool waited = false;
+    uint64_t generation = 0;
 };
 struct Swapchain {
     XrSwapchain handle{}, output{};
@@ -62,6 +73,17 @@ struct Swapchain {
     XrSwapchainCreateInfo info{}, outInfo{};
     bool capable = false, captured = false, outputAcquired = false, outputWaited = false;
     std::vector<ComPtr<IUnknown>> images, outImages;
+    std::vector<VkImage> vulkanImages, vulkanOutImages;
+    std::set<uint32_t> initializedOutputLayers;
+    uint64_t acquisitionGeneration = 0;
+    struct Declaration {
+        uint32_t index{};
+        uint64_t generation{};
+        VkImageLayout layout{};
+        VkQueue queue{};
+        VkFence fence{};
+    };
+    std::optional<Declaration> declaration;
     std::deque<Acquisition> acquired;
     uint32_t outputIndex = 0;
     uint64_t captureEpoch = 0;
@@ -114,6 +136,15 @@ static void error(Session &s, const std::string &message) {
 static bool allowed(const Profile &p) {
     return p.enabled && p.edgeEnabled && (p.horizontal < 1 || p.vertical < 1);
 }
+static bool isDepth(const Swapchain &sc) {
+    return sc.session->api == "Vulkan" ? vulkanDepthFormat(sc.info.format) : depthFormat(sc.info.format);
+}
+static bool isColor(const Swapchain &sc) {
+    return sc.session->api == "Vulkan" ? vulkanColorFormat(sc.info.format) : supportedFormat(sc.info.format);
+}
+static bool vulkanAllowed(const Session &s, const Profile &p) {
+    return s.api != "Vulkan" || (s.vulkanCooperating && p.vulkanEnabled && p.vulkanProcessing == "auto");
+}
 static void getImages(Swapchain &sc, bool output) {
     auto &dispatch = *sc.session->instance;
     auto handle = output ? sc.output : sc.handle;
@@ -121,6 +152,20 @@ static void getImages(Swapchain &sc, bool output) {
     uint32_t n = 0;
     if (XR_FAILED(dispatch.EnumerateSwapchainImages(handle, 0, &n, nullptr)))
         throw std::runtime_error("Cannot enumerate swapchain images");
+    if (sc.session->api == "Vulkan") {
+        std::vector<XrSwapchainImageVulkanKHR> v(n, {XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR});
+        if (!n || XR_FAILED(dispatch.EnumerateSwapchainImages(
+                      handle, n, &n, reinterpret_cast<XrSwapchainImageBaseHeader *>(v.data()))))
+            throw std::runtime_error("Cannot enumerate Vulkan images");
+        auto &native = output ? sc.vulkanOutImages : sc.vulkanImages;
+        native.clear();
+        for (auto &x : v) {
+            if (!x.image || x.next)
+                throw std::runtime_error("Unsupported Vulkan image enumeration result");
+            native.push_back(x.image);
+        }
+        return;
+    }
     if (sc.session->api == "D3D11") {
         std::vector<XrSwapchainImageD3D11KHR> v(n, {XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR});
         if (XR_FAILED(dispatch.EnumerateSwapchainImages(
@@ -144,10 +189,17 @@ static bool outputImage(Swapchain &sc) {
         ci.next = nullptr;
         ci.createFlags = 0;
         ci.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT | XR_SWAPCHAIN_USAGE_SAMPLED_BIT;
+        if (sc.session->api == "Vulkan")
+            ci.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT |
+                            XR_SWAPCHAIN_USAGE_UNORDERED_ACCESS_BIT;
         ci.mipCount = 1;
         ci.width = static_cast<uint32_t>(std::ceil(ci.width / d.startup.horizontal));
         ci.height = static_cast<uint32_t>(std::ceil(ci.height / d.startup.vertical));
         auto r = d.CreateSwapchain(sc.session->handle, &ci, &sc.output);
+        if (XR_FAILED(r) && sc.session->api == "Vulkan") {
+            ci.usageFlags &= ~XR_SWAPCHAIN_USAGE_UNORDERED_ACCESS_BIT;
+            r = d.CreateSwapchain(sc.session->handle, &ci, &sc.output);
+        }
         if (XR_FAILED(r)) {
             error(*sc.session, "Output swapchain creation failed: " + std::to_string(r));
             return false;
@@ -155,7 +207,7 @@ static bool outputImage(Swapchain &sc) {
         sc.outInfo = ci;
         getImages(sc, true);
     }
-    if (sc.outImages.empty())
+    if (sc.session->api == "Vulkan" ? sc.vulkanOutImages.empty() : sc.outImages.empty())
         getImages(sc, true);
     if (!sc.outputAcquired) {
         XrSwapchainImageAcquireInfo a{XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO};
@@ -171,8 +223,9 @@ static bool outputImage(Swapchain &sc) {
         if (r != XR_SUCCESS && r != XR_SESSION_LOSS_PENDING)
             return false;
         sc.outputWaited = true;
+        sc.initializedOutputLayers.clear();
     }
-    return sc.outputIndex < sc.outImages.size();
+    return sc.outputIndex < (sc.session->api == "Vulkan" ? sc.vulkanOutImages.size() : sc.outImages.size());
 }
 static bool releaseOutput(Swapchain &sc) {
     if (sc.outputAcquired && sc.outputWaited) {
@@ -191,6 +244,13 @@ static void disposeSwapchain(Swapchain &sc) {
     sc.images.clear();
     sc.captured = false;
     sc.outImages.clear();
+    sc.vulkanImages.clear();
+    if (sc.session->renderer)
+        for (auto image : sc.vulkanOutImages)
+            sc.session->renderer->forgetVulkanOutput(image);
+    sc.vulkanOutImages.clear();
+    sc.declaration.reset();
+    sc.initializedOutputLayers.clear();
     if (sc.output) {
         auto result = sc.session->instance->DestroySwapchain(sc.output);
         if (XR_FAILED(result))
@@ -336,13 +396,31 @@ XRAPI_ATTR XrResult XRAPI_CALL hookCreateSession(XrInstance handle, const XrSess
                     s->renderer = makeD3D12(b->device, b->queue);
                     break;
                 }
+                // Vulkan2 is an alias of this tag and structure in the pinned SDK.
+                if (p->type == XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR) {
+                    s->api = "Vulkan";
+                    if (!inst->vulkanExtension)
+                        throw std::runtime_error("Vulkan binding without an enabled OpenXR Vulkan extension");
+                    auto binding = reinterpret_cast<const XrGraphicsBindingVulkanKHR *>(p);
+                    s->vulkan = std::make_unique<VulkanContext>(*binding);
+                    inst->ipc->report({{"vulkan",
+                                        {{"device", s->vulkan->properties.deviceName},
+                                         {"processingEnabled", false},
+                                         {"queueFamily", binding->queueFamilyIndex},
+                                         {"queueIndex", binding->queueIndex},
+                                         {"reason", s->vulkanReason}}}});
+                    break;
+                }
             }
         } catch (const std::exception &e) {
+            s->vulkanReason = e.what();
             error(*s, e.what());
         }
         sessions[*result] = s;
         inst->ipc->report({{"graphicsApi", s->api},
-                           {"status", s->renderer ? "Ready" : "Unsupported graphics binding: passthrough"}});
+                           {"status", s->renderer          ? "Ready"
+                                      : s->api == "Vulkan" ? s->vulkanReason
+                                                           : "Unsupported graphics binding: passthrough"}});
         return r;
     } catch (...) {
         inst->DestroySession(*result);
@@ -361,6 +439,14 @@ XRAPI_ATTR XrResult XRAPI_CALL hookEnumerateViewConfigurationViews(XrInstance ha
     auto r = i->EnumerateViewConfigurationViews(handle, system, type, capacity, count, views);
     if (XR_SUCCEEDED(r) && capacity && views && type == XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO &&
         allowed(i->startup)) {
+        if (i->vulkanExtension) {
+            bool ready = false;
+            for (auto &[_, s] : sessions)
+                if (s->instance == i && s->renderer && vulkanAllowed(*s, s->instance->ipc->profile()))
+                    ready = true;
+            if (!ready)
+                return r;
+        }
         for (uint32_t n = 0; n < *count; n++) {
             views[n].recommendedImageRectWidth =
                 std::max(1u, (uint32_t)std::ceil(views[n].recommendedImageRectWidth * i->startup.horizontal));
@@ -386,15 +472,23 @@ XRAPI_ATTR XrResult XRAPI_CALL hookLocateViews(XrSession handle, const XrViewLoc
             resetHistory(*s, true);
         const auto validTracking = XR_VIEW_STATE_ORIENTATION_VALID_BIT | XR_VIEW_STATE_POSITION_VALID_BIT;
         bool tracking = (state->viewStateFlags & validTracking) == validTracking;
+        bool vulkanColorReady = s->api != "Vulkan";
+        if (!vulkanColorReady)
+            for (auto &[_, sc] : swapchains)
+                if (sc->session == s && sc->capable && isColor(*sc))
+                    vulkanColorReady = true;
         if (!tracking || (s->resetTime && info->displayTime >= s->resetTime)) {
             resetHistory(*s);
             s->resetTime = 0;
         }
-        if (!s->renderer || !allowed(p) ||
+        if (!s->renderer || !vulkanAllowed(*s, p) || !vulkanColorReady || !allowed(p) ||
             info->viewConfigurationType != XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO || *count != 2) {
             s->instance->ipc->report(
                 {{"status",
-                  !allowed(p) ? "Processing disabled" : "Passthrough: unsupported views or graphics binding"},
+                  !allowed(p) ? "Processing disabled"
+                  : s->api == "Vulkan"
+                      ? "Vulkan diagnostic passthrough: synchronization contract absent or policy disabled"
+                      : "Passthrough: unsupported views or graphics binding"},
                  {"fovMatched", false}});
             resetHistory(*s);
             return r;
@@ -429,10 +523,20 @@ XRAPI_ATTR XrResult XRAPI_CALL hookCreateSwapchain(XrSession handle, const XrSwa
         supportedFormat(info->format) && (info->usageFlags & XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT);
     bool depth = s->instance->depthExtension && depthFormat(info->format) &&
                  (info->usageFlags & XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+    std::string vulkanFailure;
+    if (s->api == "Vulkan") {
+        color =
+            vulkanColorFormat(info->format) && (info->usageFlags & XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT);
+        depth = s->instance->depthExtension && vulkanDepthFormat(info->format) &&
+                (info->usageFlags & XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+    }
     bool capable = s->renderer && (color || depth) && info->sampleCount == 1 && info->faceCount == 1 &&
                    info->mipCount == 1 && info->createFlags == 0 && !info->next &&
                    (info->usageFlags & (XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT |
                                         XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
+    if (s->api == "Vulkan")
+        capable = capable && vulkanAllowed(*s, s->instance->ipc->profile()) &&
+                  s->renderer->supportsVulkan(*info, vulkanFailure);
     auto ci = *info;
     if (capable)
         ci.usageFlags |= XR_SWAPCHAIN_USAGE_TRANSFER_SRC_BIT;
@@ -448,7 +552,23 @@ XRAPI_ATTR XrResult XRAPI_CALL hookCreateSwapchain(XrSession handle, const XrSwa
         sc->handle = *result;
         sc->session = s;
         sc->info = *info;
+        if (s->api == "Vulkan" && capable)
+            sc->info = ci;
         sc->capable = capable;
+        if (s->api == "Vulkan")
+            s->instance->ipc->report(
+                {{"vulkanSwapchain",
+                  {{"width", info->width},
+                   {"height", info->height},
+                   {"arraySize", info->arraySize},
+                   {"format", info->format},
+                   {"sampleCount", info->sampleCount},
+                   {"usageFlags", ci.usageFlags},
+                   {"processingCapable", capable},
+                   {"reason", vulkanFailure.empty()
+                                  ? (capable ? "Verified cooperative path"
+                                             : "Synchronization contract absent or unsupported swapchain")
+                                  : vulkanFailure}}}});
         swapchains[*result] = sc;
         return r;
     } catch (...) {
@@ -464,7 +584,16 @@ XRAPI_ATTR XrResult XRAPI_CALL hookEnumerateSwapchainImages(XrSwapchain handle, 
     auto sc = lookup(swapchains, handle);
     if (!sc)
         return XR_ERROR_HANDLE_INVALID;
-    return sc->session->instance->EnumerateSwapchainImages(handle, capacity, count, images);
+    auto r = sc->session->instance->EnumerateSwapchainImages(handle, capacity, count, images);
+    if (XR_SUCCEEDED(r) && capacity && images && sc->session->api == "Vulkan" && *count <= capacity &&
+        images->type == XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR) {
+        sc->vulkanImages.clear();
+        auto native = reinterpret_cast<XrSwapchainImageVulkanKHR *>(images);
+        for (uint32_t i = 0; i < *count; ++i)
+            sc->vulkanImages.push_back(native[i].image);
+        sc->session->instance->ipc->report({{"vulkanImageCount", *count}});
+    }
+    return r;
 }
 XRAPI_ATTR XrResult XRAPI_CALL hookAcquireSwapchainImage(XrSwapchain handle,
                                                          const XrSwapchainImageAcquireInfo *info,
@@ -475,7 +604,7 @@ XRAPI_ATTR XrResult XRAPI_CALL hookAcquireSwapchainImage(XrSwapchain handle,
         return XR_ERROR_HANDLE_INVALID;
     auto r = sc->session->instance->AcquireSwapchainImage(handle, info, index);
     if (XR_SUCCEEDED(r))
-        sc->acquired.push_back({*index, false});
+        sc->acquired.push_back({*index, false, ++sc->acquisitionGeneration});
     return r;
 }
 XRAPI_ATTR XrResult XRAPI_CALL hookWaitSwapchainImage(XrSwapchain handle,
@@ -503,24 +632,48 @@ XRAPI_ATTR XrResult XRAPI_CALL hookReleaseSwapchainImage(XrSwapchain handle,
     bool copied = false;
     auto profile = sc->session->instance->ipc->profile();
     if (sc->capable && !info->next && !sc->acquired.empty() && sc->acquired.front().waited &&
-        allowed(profile) &&
-        (!depthFormat(sc->info.format) || (profile.method == 5 && profile.temporal.useDepth)))
+        allowed(profile) && vulkanAllowed(*sc->session, profile) &&
+        (!isDepth(*sc) || (profile.method == 5 && profile.temporal.useDepth)))
         try {
-            if (sc->images.empty())
+            if (sc->session->api == "Vulkan" ? sc->vulkanImages.empty() : sc->images.empty())
                 getImages(*sc, false);
             auto n = sc->acquired.front().index;
-            if (n >= sc->images.size())
+            if (n >= (sc->session->api == "Vulkan" ? sc->vulkanImages.size() : sc->images.size()))
                 throw std::runtime_error("Invalid acquired image index");
-            sc->session->renderer->capture(id(handle), sc->images[n].Get(), (DXGI_FORMAT)sc->info.format);
+            if (sc->session->api == "Vulkan") {
+                auto declaration = sc->declaration;
+                if (!declaration || declaration->index != n ||
+                    declaration->generation != sc->acquired.front().generation ||
+                    declaration->queue != sc->session->vulkan->queue)
+                    throw std::runtime_error("Vulkan image state declaration missing, stale or wrong queue");
+                auto producerStatus =
+                    sc->session->vulkan->GetFenceStatus(sc->session->vulkan->device, declaration->fence);
+                if (producerStatus == VK_ERROR_DEVICE_LOST) {
+                    sc->session->vulkanDeviceLost = true;
+                    sc->session->vulkanCooperating = false;
+                }
+                if (producerStatus != VK_SUCCESS)
+                    throw std::runtime_error(
+                        producerStatus == VK_NOT_READY
+                            ? "Vulkan producer fence incomplete: passthrough without waiting"
+                            : "Vulkan producer fence error VkResult " + std::to_string(producerStatus));
+                sc->session->renderer->captureVulkan(id(handle),
+                                                     {sc->vulkanImages[n], sc->info, declaration->layout});
+            } else
+                sc->session->renderer->capture(id(handle), sc->images[n].Get(), (DXGI_FORMAT)sc->info.format);
             copied = true;
         } catch (const std::exception &e) {
             error(*sc->session, e.what());
-            sc->capable = false;
+            if (sc->session->api == "Vulkan" && sc->session->renderer->hasFailed())
+                sc->session->vulkanCooperating = false;
+            if (sc->session->api != "Vulkan")
+                sc->capable = false;
         }
     auto r = sc->session->instance->ReleaseSwapchainImage(handle, info);
     if (XR_SUCCEEDED(r)) {
         if (!sc->acquired.empty())
             sc->acquired.pop_front();
+        sc->declaration.reset();
         sc->captured = copied;
         if (copied)
             sc->captureEpoch = sc->session->frameEpoch;
@@ -528,13 +681,14 @@ XRAPI_ATTR XrResult XRAPI_CALL hookReleaseSwapchainImage(XrSwapchain handle,
     return r;
 }
 XRAPI_ATTR XrResult XRAPI_CALL hookEndFrame(XrSession handle, const XrFrameEndInfo *info) {
+    auto cpuStart = std::chrono::steady_clock::now();
     std::lock_guard lock(objectsMutex);
     auto s = lookup(sessions, handle);
     if (!s)
         return XR_ERROR_HANDLE_INVALID;
     const auto captureEpoch = s->frameEpoch++;
     auto passthrough = [&]() { return s->instance->EndFrame(handle, info); };
-    if (!s->renderer || !info || !info->layerCount)
+    if (!s->renderer || !vulkanAllowed(*s, s->instance->ipc->profile()) || !info || !info->layerCount)
         return passthrough();
     try {
         auto rec = s->located.rend();
@@ -578,7 +732,8 @@ XRAPI_ATTR XrResult XRAPI_CALL hookEndFrame(XrSession handle, const XrFrameEndIn
                     supportedChain = node->type == XR_TYPE_COMPOSITION_LAYER_DEPTH_INFO_KHR && !node->next;
                 }
                 if (!supportedChain || !same(view.fov, rec->reduced[v]) || !sc || sc->session != s ||
-                    !supportedFormat(sc->info.format) || !sc->capable || !sc->captured ||
+                    !isColor(*sc) || !sc->capable || !sc->captured ||
+                    (s->api == "Vulkan" && sc->captureEpoch != captureEpoch) ||
                     view.subImage.imageArrayIndex >= sc->info.arraySize || r.offset.x < 0 || r.offset.y < 0 ||
                     r.extent.width <= 0 || r.extent.height <= 0 ||
                     (uint64_t)r.offset.x + r.extent.width > sc->info.width ||
@@ -660,7 +815,10 @@ XRAPI_ATTR XrResult XRAPI_CALL hookEndFrame(XrSession handle, const XrFrameEndIn
                     }
                     auto &view = p.views[v];
                     auto sc = swapchains.at(view.subImage.swapchain);
-                    auto c = constants(view, rec->original[v], sc->info, rec->profile);
+                    auto c = constants(view, rec->original[v], sc->info, rec->profile,
+                                       s->api == "Vulkan"
+                                           ? std::optional<bool>(vulkanSrgb(VkFormat(sc->info.format)))
+                                           : std::nullopt);
                     auto src = view.subImage.imageRect;
                     auto rect = src;
                     // Scale both endpoints to avoid gaps between packed eye rectangles.
@@ -693,7 +851,7 @@ XRAPI_ATTR XrResult XRAPI_CALL hookEndFrame(XrSession handle, const XrFrameEndIn
                         temporalFrame.time = info->displayTime;
                         temporalFrame.width = src.extent.width;
                         temporalFrame.height = src.extent.height;
-                        temporalFrame.format = (DXGI_FORMAT)sc->info.format;
+                        temporalFrame.format = sc->info.format;
                         temporalFrame.trackingValid =
                             rec->trackingValid && p.worldValid && validPose(temporalFrame.pose);
                         if (view.next && rec->profile.temporal.useDepth) {
@@ -702,8 +860,8 @@ XRAPI_ATTR XrResult XRAPI_CALL hookEndFrame(XrSession handle, const XrFrameEndIn
                             DepthMapping mapping{depth->minDepth, depth->maxDepth, depth->nearZ, depth->farZ};
                             if (depthChain && depthChain->session == s && depthChain->capable &&
                                 depthChain->captured && depthChain->captureEpoch == captureEpoch &&
-                                depthFormat(depthChain->info.format) &&
-                                validSubImage(*depthChain, depth->subImage) && mapping.valid()) {
+                                isDepth(*depthChain) && validSubImage(*depthChain, depth->subImage) &&
+                                mapping.valid()) {
                                 depthRegion = depth->subImage;
                                 temporalFrame.hasDepth = true;
                                 temporalFrame.depth = mapping;
@@ -746,8 +904,17 @@ XRAPI_ATTR XrResult XRAPI_CALL hookEndFrame(XrSession handle, const XrFrameEndIn
                              {"historyInvalidations", s->historyInvalidations + history->invalidations()},
                              {"gpuBudgetFallback", budgetFallback}});
                     }
-                    s->renderer->render(id(sc->handle), sc->outImages[sc->outputIndex].Get(),
-                                        (DXGI_FORMAT)sc->info.format, c, rect);
+                    if (s->api == "Vulkan") {
+                        auto oldLayout = sc->initializedOutputLayers.contains(c.slice)
+                                             ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+                                             : VK_IMAGE_LAYOUT_UNDEFINED;
+                        s->renderer->renderVulkan(
+                            id(sc->handle), {sc->vulkanOutImages[sc->outputIndex], sc->outInfo, oldLayout}, c,
+                            rect);
+                        sc->initializedOutputLayers.insert(c.slice);
+                    } else
+                        s->renderer->render(id(sc->handle), sc->outImages[sc->outputIndex].Get(),
+                                            (DXGI_FORMAT)sc->info.format, c, rect);
                     if (history && temporalFrame.trackingValid && rec->profile.temporal.enabled) {
                         auto &entry = history->writable();
                         s->renderer->storeHistory(id(sc->handle), entry.colorKey, view.subImage);
@@ -793,11 +960,30 @@ XRAPI_ATTR XrResult XRAPI_CALL hookEndFrame(XrSession handle, const XrFrameEndIn
         }
         auto frame = *info;
         frame.layers = layers.data();
+        if (s->api == "Vulkan") {
+            auto diagnostics = s->renderer->vulkanDiagnostics();
+            diagnostics["cpuReconstructionFrameMs"] =
+                std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - cpuStart)
+                    .count();
+            diagnostics["views"] = Json::array();
+            for (auto &projection : projections)
+                for (uint32_t eye = 0; eye < projection.views.size(); ++eye) {
+                    auto &v = projection.views[eye];
+                    diagnostics["views"].push_back(
+                        {{"eye", eye},
+                         {"arrayLayer", v.subImage.imageArrayIndex},
+                         {"outputRect",
+                          {v.subImage.imageRect.offset.x, v.subImage.imageRect.offset.y,
+                           v.subImage.imageRect.extent.width, v.subImage.imageRect.extent.height}}});
+                }
+            s->instance->ipc->report({{"vulkan", diagnostics}});
+        }
         auto gpu = s->renderer->gpuMilliseconds();
         auto sourceGpu = s->renderer->sourceCopyMilliseconds(),
              historyGpu = s->renderer->historyCopyMilliseconds();
         s->instance->ipc->report(
             {{"status", "Reconstructing"},
+             {"lastError", ""},
              {"requestedFov", Json::array({fovJson(rec->reduced[0]), fovJson(rec->reduced[1])})},
              {"submittedFov", Json::array({fovJson(rec->original[0]), fovJson(rec->original[1])})},
              {"fovMatched", true},
@@ -808,15 +994,73 @@ XRAPI_ATTR XrResult XRAPI_CALL hookEndFrame(XrSession handle, const XrFrameEndIn
                {"fusedReprojectionConfidenceFallback",
                 rec->profile.method == 5 && gpu ? Json(*gpu) : Json(nullptr)}}},
              {"gpuMillisecondsPerEyePass", gpu ? Json(*gpu) : Json(nullptr)}});
-        return s->instance->EndFrame(handle, &frame);
+        auto result = s->instance->EndFrame(handle, &frame);
+        if (s->api == "Vulkan")
+            s->instance->ipc->report({{"vulkanEndFrameCpuMs", std::chrono::duration<double, std::milli>(
+                                                                  std::chrono::steady_clock::now() - cpuStart)
+                                                                  .count()}});
+        return result;
     } catch (const std::exception &e) {
         for (auto &[_, sc] : swapchains)
             if (sc->session == s)
                 releaseOutput(*sc);
+        if (s->api == "Vulkan" && s->renderer->hasFailed())
+            s->vulkanCooperating = false;
         resetHistory(*s);
         error(*s, e.what());
         return passthrough();
     }
+}
+XRAPI_ATTR XrResult XRAPI_CALL hookFovEnableVulkanProcessing(XrSession handle, uint32_t version) {
+    std::lock_guard lock(objectsMutex);
+    auto s = lookup(sessions, handle);
+    if (!s)
+        return XR_ERROR_HANDLE_INVALID;
+    if (version != FOV_VULKAN_COOPERATION_VERSION)
+        return XR_ERROR_API_VERSION_UNSUPPORTED;
+    auto profile = s->instance->ipc->profile();
+    if (s->api != "Vulkan" || !s->vulkan || s->vulkanDeviceLost)
+        return XR_ERROR_GRAPHICS_DEVICE_INVALID;
+    if (s->renderer && s->renderer->hasFailed())
+        return XR_ERROR_RUNTIME_FAILURE;
+    if (!profile.vulkanEnabled || profile.vulkanProcessing != "auto")
+        return XR_ERROR_FEATURE_UNSUPPORTED;
+    if (!s->renderer) {
+        XrGraphicsBindingVulkanKHR b{XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR};
+        b.instance = s->vulkan->instance;
+        b.physicalDevice = s->vulkan->physical;
+        b.device = s->vulkan->device;
+        b.queueFamilyIndex = s->vulkan->family;
+        b.queueIndex = s->vulkan->queueIndex;
+        try {
+            s->renderer = makeVulkan(b);
+        } catch (const std::exception &e) {
+            error(*s, e.what());
+            return XR_ERROR_RUNTIME_FAILURE;
+        }
+    }
+    s->vulkanCooperating = true;
+    s->instance->ipc->report(
+        {{"status", "Vulkan cooperative processing ready"}, {"vulkan", s->renderer->vulkanDiagnostics()}});
+    return XR_SUCCESS;
+}
+XRAPI_ATTR XrResult XRAPI_CALL hookFovDeclareVulkanImageState(XrSwapchain handle, uint32_t index,
+                                                              VkImageLayout layout, VkQueue queue,
+                                                              VkFence fence) {
+    std::lock_guard lock(objectsMutex);
+    auto sc = lookup(swapchains, handle);
+    if (!sc)
+        return XR_ERROR_HANDLE_INVALID;
+    if (!sc->session->vulkanCooperating || !sc->session->vulkan)
+        return XR_ERROR_FEATURE_UNSUPPORTED;
+    if (sc->acquired.empty() || !sc->acquired.front().waited || sc->acquired.front().index != index ||
+        !fence || queue != sc->session->vulkan->queue)
+        return XR_ERROR_VALIDATION_FAILURE;
+    if (layout != (isDepth(*sc) ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+                                : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL))
+        return XR_ERROR_VALIDATION_FAILURE;
+    sc->declaration = Swapchain::Declaration{index, sc->acquired.front().generation, layout, queue, fence};
+    return XR_SUCCESS;
 }
 XRAPI_ATTR XrResult XRAPI_CALL hookGetInstanceProcAddr(XrInstance handle, const char *name,
                                                        PFN_xrVoidFunction *function) {
@@ -831,6 +1075,14 @@ XRAPI_ATTR XrResult XRAPI_CALL hookGetInstanceProcAddr(XrInstance handle, const 
     auto inst = lookup(instances, handle);
     if (!inst)
         return XR_ERROR_HANDLE_INVALID;
+    if (!std::strcmp(name, "xrFovEnableVulkanProcessing")) {
+        *function = reinterpret_cast<PFN_xrVoidFunction>(Boundary<hookFovEnableVulkanProcessing>::invoke);
+        return XR_SUCCESS;
+    }
+    if (!std::strcmp(name, "xrFovDeclareVulkanImageState")) {
+        *function = reinterpret_cast<PFN_xrVoidFunction>(Boundary<hookFovDeclareVulkanImageState>::invoke);
+        return XR_SUCCESS;
+    }
     auto r = inst->gipa(handle, name, function);
     if (XR_FAILED(r))
         return r;
@@ -870,10 +1122,14 @@ XRAPI_ATTR XrResult XRAPI_CALL createLayerInstance(const XrInstanceCreateInfo *i
                    reinterpret_cast<PFN_xrVoidFunction *>(&inst->CreateReferenceSpace));
         inst->gipa(*result, "xrLocateSpace", reinterpret_cast<PFN_xrVoidFunction *>(&inst->LocateSpace));
         inst->gipa(*result, "xrDestroySpace", reinterpret_cast<PFN_xrVoidFunction *>(&inst->DestroySpace));
-        for (uint32_t extension = 0; extension < info->enabledExtensionCount; extension++)
+        for (uint32_t extension = 0; extension < info->enabledExtensionCount; extension++) {
             if (!std::strcmp(info->enabledExtensionNames[extension],
                              XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME))
                 inst->depthExtension = true;
+            if (!std::strcmp(info->enabledExtensionNames[extension], XR_KHR_VULKAN_ENABLE_EXTENSION_NAME) ||
+                !std::strcmp(info->enabledExtensionNames[extension], XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME))
+                inst->vulkanExtension = true;
+        }
 #define LOAD(n)                                                                                              \
     if (XR_FAILED(inst->gipa(*result, "xr" #n, reinterpret_cast<PFN_xrVoidFunction *>(&inst->n))) ||         \
         !inst->n)                                                                                            \

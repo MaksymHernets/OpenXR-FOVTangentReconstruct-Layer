@@ -127,6 +127,14 @@ Profile parseProfile(const Json &j, Profile p) {
         return p;
     p.enabled = flag(j, "enabled", p.enabled);
     p.edgeEnabled = flag(j, "edgeEnabled", p.edgeEnabled);
+    if (auto v = j.find("vulkan"); v != j.end() && v->is_object()) {
+        p.vulkanEnabled = flag(*v, "enabled", p.vulkanEnabled);
+        if (v->contains("processing") && (*v)["processing"].is_string()) {
+            auto policy = (*v)["processing"].get<std::string>();
+            if (policy == "auto" || policy == "passthrough")
+                p.vulkanProcessing = policy;
+        }
+    }
     p.horizontal = number(j, "horizontalFovMultiplier", p.horizontal, .5f, 1);
     p.vertical = number(j, "verticalFovMultiplier", p.vertical, .5f, 1);
     if (j.contains("edgeFillMethod") && j["edgeFillMethod"].is_string()) {
@@ -180,6 +188,7 @@ Profile parseProfile(const Json &j, Profile p) {
 Json profileJson(const Profile &p) {
     const char *names[] = {"clamp", "gradient", "blur", "mirror", "solid", "temporalDepth"};
     return {{"enabled", p.enabled},
+            {"vulkan", {{"enabled", p.vulkanEnabled}, {"processing", p.vulkanProcessing}}},
             {"edgeEnabled", p.edgeEnabled},
             {"horizontalFovMultiplier", p.horizontal},
             {"verticalFovMultiplier", p.vertical},

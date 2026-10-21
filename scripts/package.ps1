@@ -30,4 +30,8 @@ $qtLicenses = Join-Path $QtPrefix 'licenses'
 if (Test-Path $qtLicenses) { Copy-Item -LiteralPath $qtLicenses -Destination (Join-Path $licenseDirectory 'Qt') -Recurse -Force }
 $openxrLicense = Join-Path $root 'external\OpenXR-SDK\LICENSE'
 if (Test-Path $openxrLicense) { Copy-Item -LiteralPath $openxrLicense -Destination (Join-Path $licenseDirectory 'OpenXR.txt') -Force }
+$vulkanLicense = Join-Path $root 'external\Vulkan-Headers\LICENSE.md'
+if (Test-Path $vulkanLicense) { Copy-Item -LiteralPath $vulkanLicense -Destination (Join-Path $licenseDirectory 'Vulkan-Headers.txt') -Force }
+$vulkanNotices = Join-Path $root 'external\Vulkan-Headers\LICENSES'
+if (Test-Path $vulkanNotices) { Copy-Item -LiteralPath $vulkanNotices -Destination (Join-Path $licenseDirectory 'Vulkan-Headers') -Recurse -Force }
 Write-Host "Package is ready in $destination. Microsoft Visual C++ x64 runtime is required."

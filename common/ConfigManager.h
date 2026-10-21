@@ -17,6 +17,8 @@ struct TemporalSettings {
     bool operator==(const TemporalSettings &) const = default;
 };
 struct Profile {
+    bool vulkanEnabled = true;
+    std::string vulkanProcessing = "auto";
     bool enabled = true, edgeEnabled = true;
     float horizontal = 0.8f, vertical = 0.8f, stretchWidth = 0.15f, gradientStrength = 0.7f,
           blurStrength = 0.5f;

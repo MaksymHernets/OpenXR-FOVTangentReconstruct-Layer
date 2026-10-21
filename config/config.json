@@ -6,7 +6,18 @@
     "horizontalFovMultiplier": 0.8,
     "verticalFovMultiplier": 0.8,
     "edgeFillMethod": "gradient",
-    "edgeFill": { "stretchWidth": 0.15, "gradientStrength": 0.7, "edgeSamples": 8, "blurRadius": 4, "blurStrength": 0.5, "color": [0.0, 0.0, 0.0] },
+    "edgeFill": {
+      "stretchWidth": 0.15,
+      "gradientStrength": 0.7,
+      "edgeSamples": 8,
+      "blurRadius": 4,
+      "blurStrength": 0.5,
+      "color": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
     "temporalDepth": {
       "enabled": true,
       "historyFrames": 4,
@@ -17,11 +28,27 @@
       "transitionWidth": 0.1,
       "maxHistoryAge": 0.15,
       "gpuBudgetMs": 0,
-      "fallback": { "method": "blur", "blurRadius": 6, "blurStrength": 0.5, "stretchWidth": 0.15 },
-      "debug": { "showConfidenceMask": false, "showReprojectionCoverage": false, "showDepth": false }
+      "fallback": {
+        "method": "blur",
+        "blurRadius": 6,
+        "blurStrength": 0.5,
+        "stretchWidth": 0.15
+      },
+      "debug": {
+        "showConfidenceMask": false,
+        "showReprojectionCoverage": false,
+        "showDepth": false
+      }
+    },
+    "vulkan": {
+      "enabled": true,
+      "processing": "auto"
     }
   },
   "games": {},
-  "debug": { "logging": true, "gpuTiming": false, "showFovBorders": false }
+  "debug": {
+    "logging": true,
+    "gpuTiming": false,
+    "showFovBorders": false
+  }
 }
-

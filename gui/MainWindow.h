@@ -39,6 +39,8 @@ class MainWindow : public QMainWindow {
     QMap<QString, QLocalSocket *> sockets;
     QMap<QString, QByteArray> buffers;
     bool loading = false;
+    bool editorVulkanEnabled = true;
+    std::string editorVulkanProcessing = "auto";
     void refresh();
     void refreshGames();
     void loadEditor();

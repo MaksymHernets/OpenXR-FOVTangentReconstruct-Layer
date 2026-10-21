@@ -1,0 +1,293 @@
+#version 450
+layout(local_size_x = 8, local_size_y = 8) in;
+layout(set = 0, binding = 0) uniform sampler2DArray sourceImage;
+layout(set = 0, binding = 1, rgba8) uniform writeonly image2DArray outputImage;
+struct HistoryData {
+    vec4 rotation;
+    vec4 translationAge;
+    vec4 tangents;
+    vec4 depth;
+    vec4 dimensions;
+};
+layout(std140, set = 0, binding = 2) uniform Parameters {
+    vec2 scale;
+    vec2 bias;
+    vec4 sourceRect;
+    vec2 texel;
+    uint sourceSlice;
+    uint method;
+    float stretchWidth;
+    float gradientStrength;
+    float blurRadius;
+    float blurStrength;
+    uint edgeSamples;
+    float borderFlag;
+    float reserved1;
+    float reserved2;
+    vec4 fillColor;
+    vec4 outputTangents;
+    vec4 temporalSettings;
+    vec4 adaptiveFallback;
+    vec4 temporalDebug;
+    vec4 outputSize;
+    HistoryData frames[8];
+    ivec4 destination;
+    uvec4 outputFlags;
+}
+p;
+layout(set = 0, binding = 3) uniform sampler2DArray historyColor[8];
+layout(set = 0, binding = 4) uniform sampler2DArray historyDepth[8];
+layout(std430, set = 0, binding = 5) buffer Counters {
+    uint coverage[4];
+};
+bool finite1(float x) {
+    return !isnan(x) && !isinf(x);
+}
+bool finite2(vec2 x) {
+    return !any(isnan(x)) && !any(isinf(x));
+}
+bool finite4(vec4 x) {
+    return !any(isnan(x)) && !any(isinf(x));
+}
+vec4 sampleImage(vec2 uv) {
+    vec2 lo = p.sourceRect.xy + .5 * p.texel, hi = p.sourceRect.xy + p.sourceRect.zw - .5 * p.texel;
+    return textureLod(sourceImage, vec3(clamp(p.sourceRect.xy + uv * p.sourceRect.zw, lo, hi), p.sourceSlice),
+                      0);
+}
+vec4 historySample(uint i, vec2 uv) {
+    switch (i) {
+    case 0:
+        return textureLod(historyColor[0], vec3(uv, 0), 0);
+    case 1:
+        return textureLod(historyColor[1], vec3(uv, 0), 0);
+    case 2:
+        return textureLod(historyColor[2], vec3(uv, 0), 0);
+    case 3:
+        return textureLod(historyColor[3], vec3(uv, 0), 0);
+    case 4:
+        return textureLod(historyColor[4], vec3(uv, 0), 0);
+    case 5:
+        return textureLod(historyColor[5], vec3(uv, 0), 0);
+    case 6:
+        return textureLod(historyColor[6], vec3(uv, 0), 0);
+    case 7:
+        return textureLod(historyColor[7], vec3(uv, 0), 0);
+    }
+    return vec4(0);
+}
+float loadDepth(uint i, ivec2 uv) {
+    switch (i) {
+    case 0:
+        return texelFetch(historyDepth[0], ivec3(uv, 0), 0).r;
+    case 1:
+        return texelFetch(historyDepth[1], ivec3(uv, 0), 0).r;
+    case 2:
+        return texelFetch(historyDepth[2], ivec3(uv, 0), 0).r;
+    case 3:
+        return texelFetch(historyDepth[3], ivec3(uv, 0), 0).r;
+    case 4:
+        return texelFetch(historyDepth[4], ivec3(uv, 0), 0).r;
+    case 5:
+        return texelFetch(historyDepth[5], ivec3(uv, 0), 0).r;
+    case 6:
+        return texelFetch(historyDepth[6], ivec3(uv, 0), 0).r;
+    case 7:
+        return texelFetch(historyDepth[7], ivec3(uv, 0), 0).r;
+    }
+    return -1;
+}
+vec3 qrotate(vec4 q, vec3 v) {
+    return v + 2 * cross(q.xyz, cross(q.xyz, v) + q.w * v);
+}
+vec2 projectRay(vec3 v, vec4 f) {
+    return vec2((-v.x / v.z - f.x) / (f.y - f.x), (f.z + v.y / v.z) / (f.z - f.w));
+}
+vec3 viewRay(vec2 uv, vec4 f) {
+    return vec3(mix(f.x, f.y, uv.x), mix(f.z, f.w, uv.y), -1);
+}
+bool inImage(vec2 uv) {
+    return finite2(uv) && all(greaterThanEqual(uv, vec2(0))) && all(lessThanEqual(uv, vec2(1)));
+}
+float metricDepth(uint i, vec2 uv) {
+    HistoryData h = p.frames[i];
+    if (!inImage(uv))
+        return -1;
+    ivec2 size = ivec2(h.dimensions.xy);
+    ivec2 pos = clamp(ivec2(uv * size), ivec2(0), size - 1);
+    float value = loadDepth(i, pos);
+    if (!finite1(value) || value < h.depth.x || value > h.depth.y)
+        return -1;
+    float t = (value - h.depth.x) / (h.depth.y - h.depth.x);
+    if (t <= 1e-6 || t >= 1 - 1e-6)
+        return -1;
+    float inverseDepth = mix(h.depth.z, h.depth.w, t);
+    return inverseDepth > 1e-6 ? 1 / inverseDepth : -1;
+}
+vec4 adaptiveBlur(vec2 q, float distance) {
+    vec2 edge = clamp(q, 0, 1);
+    float blend = smoothstep(0, max(p.adaptiveFallback.z, .001), distance);
+    float radius = p.adaptiveFallback.x * mix(.35, 1, blend);
+    vec4 sum = vec4(0);
+    for (int y = -1; y <= 1; y++)
+        for (int x = -1; x <= 1; x++)
+            sum += sampleImage(edge + vec2(x, y) * p.texel / p.sourceRect.zw * radius);
+    return mix(sampleImage(edge), sum / 9, p.adaptiveFallback.y * blend);
+}
+vec4 temporalPixel(vec2 viewUV, vec2 q, float outsideDistance) {
+    if (outsideDistance <= 0)
+        return sampleImage(q);
+    vec4 fallback = adaptiveBlur(q, outsideDistance);
+    fallback.a = 1;
+    vec3 ray = viewRay(viewUV, p.outputTangents);
+    vec4 chosen = vec4(0);
+    float confidence = 0, chosenDepth = 1e20;
+    bool usedDepth = false;
+    uint consistent = 0;
+    for (uint i = 0; i < min(8u, uint(p.temporalSettings.x)); i++) {
+        HistoryData h = p.frames[i];
+        vec4 inverseQ = vec4(-h.rotation.xyz, h.rotation.w);
+        vec3 historicalRay = qrotate(inverseQ, ray);
+        if (historicalRay.z >= -1e-5)
+            continue;
+        vec2 uv = projectRay(historicalRay, h.tangents);
+        bool depth = h.dimensions.z > 0;
+        float distance = -1, error = 0;
+        if (depth) {
+            if (any(lessThan(uv, vec2(-.08))) || any(greaterThan(uv, vec2(1.08))))
+                continue;
+            uv = clamp(uv, 0, 1);
+            for (int iteration = 0; iteration < 3; iteration++) {
+                float z = metricDepth(i, uv);
+                if (z <= 0)
+                    break;
+                vec3 pc = qrotate(h.rotation, viewRay(uv, h.tangents) * z) + h.translationAge.xyz;
+                if (pc.z >= -1e-4)
+                    break;
+                uv = projectRay(qrotate(inverseQ, ray * (-pc.z) - h.translationAge.xyz), h.tangents);
+            }
+            float z = metricDepth(i, uv);
+            if (z <= 0)
+                continue;
+            vec3 pc = qrotate(h.rotation, viewRay(uv, h.tangents) * z) + h.translationAge.xyz;
+            if (pc.z >= -1e-4)
+                continue;
+            distance = -pc.z;
+            error = length((projectRay(pc, p.outputTangents) - viewUV) * p.outputSize.xy);
+            if (!finite1(error) || error > 1.5)
+                continue;
+            float zx = metricDepth(i, uv + vec2(1 / max(h.dimensions.x, 1), 0));
+            float zy = metricDepth(i, uv + vec2(0, 1 / max(h.dimensions.y, 1)));
+            if (zx <= 0 || zy <= 0 || max(abs(zx - z), abs(zy - z)) > max(.03, z * .08))
+                continue;
+        } else if (!inImage(uv))
+            continue;
+        float angle = 2 * acos(clamp(abs(h.rotation.w), 0, 1));
+        float translation = length(h.translationAge.xyz);
+        float c = (depth ? .98 : .82) * exp(-h.translationAge.w / max(h.dimensions.w, .02)) *
+                  exp(-translation / (depth ? .6 : .025));
+        c *= clamp(1 - angle / 2, 0, 1) * clamp(1 - error / 2, 0, 1) * exp(-outsideDistance / 2);
+        vec4 color = historySample(i, uv);
+        if (!finite4(color))
+            continue;
+        color.a = 1;
+        if (confidence > 0 && usedDepth && depth) {
+            float tolerance = max(.04, min(distance, chosenDepth) * .05);
+            if (distance > chosenDepth + tolerance)
+                continue;
+            if (distance < chosenDepth - tolerance) {
+                chosen = color;
+                confidence = c;
+                chosenDepth = distance;
+                consistent = 0;
+                continue;
+            }
+        }
+        float colorDifference = length(color.rgb - chosen.rgb) / max(1, length(chosen.rgb));
+        if (confidence > 0 && usedDepth == depth && colorDifference < .15) {
+            chosen = mix(chosen, color, c / (confidence + c));
+            consistent++;
+            confidence = max(confidence, c);
+        } else if (confidence <= 0 || c > confidence * 1.2) {
+            chosen = color;
+            confidence = c;
+            usedDepth = depth;
+            chosenDepth = depth ? distance : 1e20;
+        }
+    }
+    confidence = clamp(confidence * (1 + min(consistent, 2u) * .04), 0, 1);
+    float weight =
+        smoothstep(p.temporalSettings.y, min(1, p.temporalSettings.y + p.adaptiveFallback.w), confidence);
+    weight *= p.temporalSettings.z * smoothstep(0, max(p.temporalSettings.w, .001), outsideDistance);
+    uvec2 pixel = gl_GlobalInvocationID.xy + uvec2(p.destination.xy);
+    if (p.temporalDebug.w > 0 && ((pixel.x & 7) == 0) && ((pixel.y & 7) == 0)) {
+        atomicAdd(coverage[0], 1);
+        if (weight > .001)
+            atomicAdd(coverage[1], 1);
+        if (weight > .001 && usedDepth)
+            atomicAdd(coverage[2], 1);
+        atomicAdd(coverage[3], uint(round(weight * 255)));
+    }
+    if (p.temporalDebug.x > 0)
+        return vec4(vec3(confidence), 1);
+    if (p.temporalDebug.y > 0)
+        return vec4(weight, 1 - weight, 0, 1);
+    if (p.temporalDebug.z > 0)
+        return usedDepth ? vec4(vec3(clamp(chosenDepth / 10, 0, 1)), 1) : vec4(1, 0, 1, 1);
+    return mix(fallback, chosen, weight);
+}
+float boundedStretch(float x) {
+    float w = max(p.stretchWidth, .01), z = min(x, 1 - x);
+    float mapped = z < w ? mix(clamp(z, 0, 1), w * exp(clamp((z - w) / w, -40, 0)), p.gradientStrength) : z;
+    return x < .5 ? mapped : 1 - mapped;
+}
+vec4 reconstruct(vec2 uv) {
+    vec2 q = uv * p.scale + p.bias;
+    vec2 outside = max(max(-q, q - 1), 0);
+    float distance = max(outside.x, outside.y);
+    if (p.method == 5)
+        return temporalPixel(uv, q, distance);
+    if (p.borderFlag > 0 && all(greaterThan(q, vec2(-.01))) && all(lessThan(q, vec2(1.01))) &&
+        min(min(abs(q.x), abs(q.x - 1)), min(abs(q.y), abs(q.y - 1))) < .004)
+        return vec4(0, 1, 1, 1);
+    if (p.method == 4)
+        return distance > 0 ? p.fillColor : sampleImage(q);
+    if (p.method == 1) {
+        vec2 v = vec2(boundedStretch(q.x), boundedStretch(q.y));
+        vec4 sum = vec4(0);
+        uint count = clamp(p.edgeSamples, 1u, 16u);
+        float amount = smoothstep(0, p.stretchWidth, distance) * p.stretchWidth * .15 * p.gradientStrength;
+        for (uint i = 0; i < count; i++) {
+            float t = count > 1 ? float(i) / (count - 1) : 0;
+            sum += sampleImage(mix(v, vec2(.5), t * amount));
+        }
+        return sum / count;
+    }
+    if (p.method == 3)
+        return sampleImage(1 - abs(1 - 2 * fract(q * .5)));
+    vec4 center = sampleImage(clamp(q, 0, 1));
+    if (p.method == 2 && distance > 0) {
+        vec4 blurred = vec4(0);
+        for (int y = -1; y <= 1; y++)
+            for (int x = -1; x <= 1; x++)
+                blurred +=
+                    sampleImage(clamp(q, 0, 1) + vec2(x, y) * p.texel / p.sourceRect.zw * p.blurRadius);
+        return mix(center, blurred / 9, p.blurStrength * smoothstep(0, p.stretchWidth, distance));
+    }
+    return center;
+}
+vec3 srgb(vec3 value) {
+    return mix(12.92 * value, 1.055 * pow(max(value, vec3(0)), vec3(1 / 2.4)) - .055,
+               greaterThan(value, vec3(.0031308)));
+}
+void main() {
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    if (any(greaterThanEqual(pixel, p.destination.zw)))
+        return;
+    vec2 uv = (vec2(pixel) + .5) / vec2(p.destination.zw);
+    vec4 color = reconstruct(uv);
+    if (p.outputFlags.y != 0)
+        color.rgb = srgb(color.rgb);
+    if (p.outputFlags.z != 0)
+        color = color.bgra;
+    imageStore(outputImage, ivec3(pixel + p.destination.xy, int(p.outputFlags.x)), color);
+}

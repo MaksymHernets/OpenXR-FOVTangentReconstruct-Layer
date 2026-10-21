@@ -42,7 +42,10 @@ int main(int argc, char **argv) {
         fov::updateJson(path / L"history.json", [](fov::Json &j) {
             j["c:/test.exe"] = {{"applicationName", "Test"}, {"firstLaunch", "2026-10-21T12:34:56Z"}};
         });
-        fov::updateJson(path / L"config.json", [](fov::Json &j) { j["sentinel"] = 123; });
+        fov::updateJson(path / L"config.json", [](fov::Json &j) {
+            j["sentinel"] = 123;
+            j["defaults"]["vulkan"] = {{"enabled", false}, {"processing", "passthrough"}};
+        });
         MainWindow window;
         auto tabs = window.findChild<QTabWidget *>();
         auto language = window.findChild<QComboBox *>("languageChoice");
@@ -132,6 +135,12 @@ int main(int argc, char **argv) {
                 "startup translation");
         require(fov::loadJson(path / L"config.json")["sentinel"] == 123,
                 "UI preferences do not modify profiles");
+        for (auto button : window.findChildren<QPushButton *>())
+            if (button->property("sourceText").toString() == "Save profile")
+                button->click();
+        auto savedVulkan = fov::loadJson(path / L"config.json")["defaults"]["vulkan"];
+        require(savedVulkan["enabled"] == false && savedVulkan["processing"] == "passthrough",
+                "Editing a profile preserves Vulkan-specific policy");
         fov::updateJson(path / L"history.json", [](fov::Json &j) {
             j["c:/second.exe"] = {{"applicationName", "Second"}, {"firstLaunch", "2025-11-30T12:34:56Z"}};
         });

@@ -1,0 +1,280 @@
+{
+  "allocatedBytes": 324096,
+  "allocationCount": 159,
+  "apiVersion": 4211039,
+  "busyFallbacks": 0,
+  "cpuSubmissionMs": 0.0419,
+  "descriptorIndexingRequired": false,
+  "device": "NVIDIA GeForce RTX 4060",
+  "directPasses": 12,
+  "failed": false,
+  "fixtureOutputDimensions": [
+    160,
+    160
+  ],
+  "fixtureSourceDimensions": [
+    128,
+    128
+  ],
+  "gpuFrameMs": null,
+  "gpuPassMs": 0.021184,
+  "historyCopyGpuMs": 0.00624,
+  "intermediatePasses": 1728,
+  "modes": [
+    {
+      "allocatedBytes": 324096,
+      "cpuSubmissionMs": 0.0411,
+      "fixtureFrameWallMsIncludingReadback": 1.7837546874999999,
+      "gpuPassMs": 0.012992,
+      "measuredFrames": 64,
+      "mode": "clamp",
+      "perViewProcessing": [
+        {
+          "arrayLayer": 0,
+          "cpuRecordAndSubmitMs": 0.1728,
+          "gpuPassMs": 0.012992,
+          "outputRect": [
+            0,
+            0,
+            160,
+            160
+          ],
+          "viewKey": "1:0:0:0"
+        },
+        {
+          "arrayLayer": 1,
+          "cpuRecordAndSubmitMs": 0.1717,
+          "gpuPassMs": 0.011072,
+          "outputRect": [
+            0,
+            0,
+            160,
+            160
+          ],
+          "viewKey": "1:1:0:0"
+        }
+      ],
+      "sourceCopyGpuMs": 0.008896,
+      "steadyStateAllocations": 0
+    },
+    {
+      "allocatedBytes": 324096,
+      "cpuSubmissionMs": 0.0431,
+      "fixtureFrameWallMsIncludingReadback": 1.7503187499999997,
+      "gpuPassMs": 0.014208,
+      "measuredFrames": 64,
+      "mode": "gradient",
+      "perViewProcessing": [
+        {
+          "arrayLayer": 0,
+          "cpuRecordAndSubmitMs": 0.1786,
+          "gpuPassMs": 0.014208,
+          "outputRect": [
+            0,
+            0,
+            160,
+            160
+          ],
+          "viewKey": "1:0:0:0"
+        },
+        {
+          "arrayLayer": 1,
+          "cpuRecordAndSubmitMs": 0.1768,
+          "gpuPassMs": 0.012096,
+          "outputRect": [
+            0,
+            0,
+            160,
+            160
+          ],
+          "viewKey": "1:1:0:0"
+        }
+      ],
+      "sourceCopyGpuMs": 0.00944,
+      "steadyStateAllocations": 0
+    },
+    {
+      "allocatedBytes": 324096,
+      "cpuSubmissionMs": 0.0413,
+      "fixtureFrameWallMsIncludingReadback": 1.7426750000000002,
+      "gpuPassMs": 0.013664,
+      "measuredFrames": 64,
+      "mode": "blur",
+      "perViewProcessing": [
+        {
+          "arrayLayer": 0,
+          "cpuRecordAndSubmitMs": 0.1701,
+          "gpuPassMs": 0.013664,
+          "outputRect": [
+            0,
+            0,
+            160,
+            160
+          ],
+          "viewKey": "1:0:0:0"
+        },
+        {
+          "arrayLayer": 1,
+          "cpuRecordAndSubmitMs": 0.1717,
+          "gpuPassMs": 0.011264,
+          "outputRect": [
+            0,
+            0,
+            160,
+            160
+          ],
+          "viewKey": "1:1:0:0"
+        }
+      ],
+      "sourceCopyGpuMs": 0.009248,
+      "steadyStateAllocations": 0
+    },
+    {
+      "allocatedBytes": 324096,
+      "cpuSubmissionMs": 0.0418,
+      "fixtureFrameWallMsIncludingReadback": 1.7634437500000002,
+      "gpuPassMs": 0.013504,
+      "measuredFrames": 64,
+      "mode": "mirror",
+      "perViewProcessing": [
+        {
+          "arrayLayer": 0,
+          "cpuRecordAndSubmitMs": 0.1717,
+          "gpuPassMs": 0.013504,
+          "outputRect": [
+            0,
+            0,
+            160,
+            160
+          ],
+          "viewKey": "1:0:0:0"
+        },
+        {
+          "arrayLayer": 1,
+          "cpuRecordAndSubmitMs": 0.1706,
+          "gpuPassMs": 0.0112,
+          "outputRect": [
+            0,
+            0,
+            160,
+            160
+          ],
+          "viewKey": "1:1:0:0"
+        }
+      ],
+      "sourceCopyGpuMs": 0.009568,
+      "steadyStateAllocations": 0
+    },
+    {
+      "allocatedBytes": 324096,
+      "cpuSubmissionMs": 0.0431,
+      "fixtureFrameWallMsIncludingReadback": 1.7468765625,
+      "gpuPassMs": 0.01328,
+      "measuredFrames": 64,
+      "mode": "solid",
+      "perViewProcessing": [
+        {
+          "arrayLayer": 0,
+          "cpuRecordAndSubmitMs": 0.1773,
+          "gpuPassMs": 0.01328,
+          "outputRect": [
+            0,
+            0,
+            160,
+            160
+          ],
+          "viewKey": "1:0:0:0"
+        },
+        {
+          "arrayLayer": 1,
+          "cpuRecordAndSubmitMs": 0.1726,
+          "gpuPassMs": 0.01104,
+          "outputRect": [
+            0,
+            0,
+            160,
+            160
+          ],
+          "viewKey": "1:1:0:0"
+        }
+      ],
+      "sourceCopyGpuMs": 0.009792,
+      "steadyStateAllocations": 0
+    },
+    {
+      "allocatedBytes": 324096,
+      "cpuSubmissionMs": 0.0419,
+      "fixtureFrameWallMsIncludingReadback": 1.7883218750000003,
+      "gpuPassMs": 0.021184,
+      "measuredFrames": 64,
+      "mode": "temporal-no-history-fallback",
+      "perViewProcessing": [
+        {
+          "arrayLayer": 0,
+          "cpuRecordAndSubmitMs": 0.1784,
+          "gpuPassMs": 0.021184,
+          "outputRect": [
+            0,
+            0,
+            160,
+            160
+          ],
+          "viewKey": "1:0:0:0"
+        },
+        {
+          "arrayLayer": 1,
+          "cpuRecordAndSubmitMs": 0.1785,
+          "gpuPassMs": 0.018816,
+          "outputRect": [
+            0,
+            0,
+            160,
+            160
+          ],
+          "viewKey": "1:1:0:0"
+        }
+      ],
+      "sourceCopyGpuMs": 0.00944,
+      "steadyStateAllocations": 0
+    }
+  ],
+  "multiviewShaderRequired": false,
+  "peakAllocatedBytes": 324096,
+  "perViewProcessing": [
+    {
+      "arrayLayer": 0,
+      "cpuRecordAndSubmitMs": 0.1784,
+      "gpuPassMs": 0.021184,
+      "outputRect": [
+        0,
+        0,
+        160,
+        160
+      ],
+      "viewKey": "1:0:0:0"
+    },
+    {
+      "arrayLayer": 1,
+      "cpuRecordAndSubmitMs": 0.1785,
+      "gpuPassMs": 0.018816,
+      "outputRect": [
+        0,
+        0,
+        160,
+        160
+      ],
+      "viewKey": "1:1:0:0"
+    }
+  ],
+  "queueFamily": 0,
+  "queueIndex": 0,
+  "sourceCopyGpuMs": 0.00944,
+  "submissionCount": 2309,
+  "synchronization": "explicit cooperative image declarations; bound queue barriers",
+  "synchronization2Required": false,
+  "thirdPartyRuntimeTested": false,
+  "timelineSemaphoresRequired": false,
+  "timestampValidBits": 64,
+  "timingSemantics": "last completed per-operation timestamps; fixture wall time includes validation readback",
+  "validationEnabled": true
+}

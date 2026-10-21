@@ -1,0 +1,285 @@
+Start testing: Oct 21 03:09 FLE Daylight Time
+----------------------------------------------------------
+1/17 Testing: core_and_gpu
+1/17 Test: core_and_gpu
+Command: "<workspace>/build-release/fov_tests.exe"
+Directory: <workspace>/build-release
+"core_and_gpu" start time: Oct 21 03:09 FLE Daylight Time
+Output:
+----------------------------------------------------------
+PASS: configuration, concurrency, asymmetric FOV, all five algorithms on D3D11 and D3D12 WARP, pixel parity
+<end of output>
+Test time =   4.42 sec
+----------------------------------------------------------
+Test Passed.
+"core_and_gpu" end time: Oct 21 03:09 FLE Daylight Time
+"core_and_gpu" time elapsed: 00:00:04
+----------------------------------------------------------
+
+2/17 Testing: layer_dispatch
+2/17 Test: layer_dispatch
+Command: "<workspace>/build-release/layer_tests.exe" "<workspace>/build-release/bin/OpenXRFovExtension.dll"
+Directory: <workspace>/build-release
+"layer_dispatch" start time: Oct 21 03:09 FLE Daylight Time
+Output:
+----------------------------------------------------------
+PASS: negotiation, chain forwarding, multiple instances, reconstruction, timeout recovery, extension passthrough, FOV/lifetime integrity, live IPC/config/history
+<end of output>
+Test time =   2.47 sec
+----------------------------------------------------------
+Test Passed.
+"layer_dispatch" end time: Oct 21 03:09 FLE Daylight Time
+"layer_dispatch" time elapsed: 00:00:02
+----------------------------------------------------------
+
+3/17 Testing: layer_dispatch_d3d12
+3/17 Test: layer_dispatch_d3d12
+Command: "<workspace>/build-release/layer_tests.exe" "<workspace>/build-release/bin/OpenXRFovExtension.dll" "--d3d12"
+Directory: <workspace>/build-release
+"layer_dispatch_d3d12" start time: Oct 21 03:09 FLE Daylight Time
+Output:
+----------------------------------------------------------
+PASS: negotiation, chain forwarding, multiple instances, reconstruction, timeout recovery, extension passthrough, FOV/lifetime integrity, live IPC/config/history
+<end of output>
+Test time =   2.32 sec
+----------------------------------------------------------
+Test Passed.
+"layer_dispatch_d3d12" end time: Oct 21 03:09 FLE Daylight Time
+"layer_dispatch_d3d12" time elapsed: 00:00:02
+----------------------------------------------------------
+
+4/17 Testing: layer_temporal_d3d11
+4/17 Test: layer_temporal_d3d11
+Command: "<workspace>/build-release/layer_tests.exe" "<workspace>/build-release/bin/OpenXRFovExtension.dll" "--temporal"
+Directory: <workspace>/build-release
+"layer_temporal_d3d11" start time: Oct 21 03:09 FLE Daylight Time
+Output:
+----------------------------------------------------------
+PASS: negotiation, chain forwarding, multiple instances, reconstruction, timeout recovery, extension passthrough, FOV/lifetime integrity, live IPC/config/history
+<end of output>
+Test time =   2.40 sec
+----------------------------------------------------------
+Test Passed.
+"layer_temporal_d3d11" end time: Oct 21 03:09 FLE Daylight Time
+"layer_temporal_d3d11" time elapsed: 00:00:02
+----------------------------------------------------------
+
+5/17 Testing: layer_temporal_d3d12
+5/17 Test: layer_temporal_d3d12
+Command: "<workspace>/build-release/layer_tests.exe" "<workspace>/build-release/bin/OpenXRFovExtension.dll" "--d3d12" "--temporal"
+Directory: <workspace>/build-release
+"layer_temporal_d3d12" start time: Oct 21 03:09 FLE Daylight Time
+Output:
+----------------------------------------------------------
+PASS: negotiation, chain forwarding, multiple instances, reconstruction, timeout recovery, extension passthrough, FOV/lifetime integrity, live IPC/config/history
+<end of output>
+Test time =   2.28 sec
+----------------------------------------------------------
+Test Passed.
+"layer_temporal_d3d12" end time: Oct 21 03:09 FLE Daylight Time
+"layer_temporal_d3d12" time elapsed: 00:00:02
+----------------------------------------------------------
+
+6/17 Testing: temporal_d3d11
+6/17 Test: temporal_d3d11
+Command: "<workspace>/build-release/temporal_tests.exe"
+Directory: <workspace>/build-release
+"temporal_d3d11" start time: Oct 21 03:09 FLE Daylight Time
+Output:
+----------------------------------------------------------
+PASS: D3D11 temporal history, rotation, translation/parallax, reversed Z, invalid depth/tracking, independent eyes, fallback, GPU counters and validation
+<end of output>
+Test time =   0.89 sec
+----------------------------------------------------------
+Test Passed.
+"temporal_d3d11" end time: Oct 21 03:09 FLE Daylight Time
+"temporal_d3d11" time elapsed: 00:00:00
+----------------------------------------------------------
+
+7/17 Testing: temporal_d3d12
+7/17 Test: temporal_d3d12
+Command: "<workspace>/build-release/temporal_tests.exe" "--d3d12"
+Directory: <workspace>/build-release
+"temporal_d3d12" start time: Oct 21 03:09 FLE Daylight Time
+Output:
+----------------------------------------------------------
+PASS: D3D12 temporal history, rotation, translation/parallax, reversed Z, invalid depth/tracking, independent eyes, fallback, GPU counters and validation
+<end of output>
+Test time =   0.88 sec
+----------------------------------------------------------
+Test Passed.
+"temporal_d3d12" end time: Oct 21 03:09 FLE Daylight Time
+"temporal_d3d12" time elapsed: 00:00:00
+----------------------------------------------------------
+
+8/17 Testing: vulkan_gpu
+8/17 Test: vulkan_gpu
+Command: "<workspace>/build-release/vulkan_tests.exe"
+Directory: <workspace>/build-release
+"vulkan_gpu" start time: Oct 21 03:09 FLE Daylight Time
+Output:
+----------------------------------------------------------
+Vulkan device: NVIDIA GeForce RTX 4060; validation=unavailable
+{"allocatedBytes":324096,"allocationCount":159,"apiVersion":4211039,"busyFallbacks":0,"cpuSubmissionMs":0.0096,"descriptorIndexingRequired":false,"device":"NVIDIA GeForce RTX 4060","directPasses":12,"failed":false,"fixtureOutputDimensions":[160,160],"fixtureSourceDimensions":[128,128],"gpuFrameMs":null,"gpuPassMs":0.019008,"historyCopyGpuMs":0.006816,"intermediatePasses":1728,"modes":[{"allocatedBytes":324096,"cpuSubmissionMs":0.0113,"fixtureFrameWallMsIncludingReadback":4.045328125,"gpuPassMs":0.009952,"measuredFrames":64,"mode":"clamp","perViewProcessing":[{"arrayLayer":0,"cpuRecordAndSubmitMs":0.0356,"gpuPassMs":0.009952,"outputRect":[0,0,160,160],"viewKey":"1:0:0:0"},{"arrayLayer":1,"cpuRecordAndSubmitMs":0.0471,"gpuPassMs":0.011136,"outputRect":[0,0,160,160],"viewKey":"1:1:0:0"}],"sourceCopyGpuMs":0.009056,"steadyStateAllocations":0},{"allocatedBytes":324096,"cpuSubmissionMs":0.0098,"fixtureFrameWallMsIncludingReadback":1.2640265624999998,"gpuPassMs":0.01104,"measuredFrames":64,"mode":"gradient","perViewProcessing":[{"arrayLayer":0,"cpuRecordAndSubmitMs":0.027,"gpuPassMs":0.01104,"outputRect":[0,0,160,160],"viewKey":"1:0:0:0"},{"arrayLayer":1,"cpuRecordAndSubmitMs":0.0344,"gpuPassMs":0.01216,"outputRect":[0,0,160,160],"viewKey":"1:1:0:0"}],"sourceCopyGpuMs":0.009568,"steadyStateAllocations":0},{"allocatedBytes":324096,"cpuSubmissionMs":0.012,"fixtureFrameWallMsIncludingReadback":1.3151093749999996,"gpuPassMs":0.010464,"measuredFrames":64,"mode":"blur","perViewProcessing":[{"arrayLayer":0,"cpuRecordAndSubmitMs":0.0296,"gpuPassMs":0.010464,"outputRect":[0,0,160,160],"viewKey":"1:0:0:0"},{"arrayLayer":1,"cpuRecordAndSubmitMs":0.04,"gpuPassMs":0.011488,"outputRect":[0,0,160,160],"viewKey":"1:1:0:0"}],"sourceCopyGpuMs":0.009248,"steadyStateAllocations":0},{"allocatedBytes":324096,"cpuSubmissionMs":0.0182,"fixtureFrameWallMsIncludingReadback":1.4180125000000008,"gpuPassMs":0.009504,"measuredFrames":64,"mode":"mirror","perViewProcessing":[{"arrayLayer":0,"cpuRecordAndSubmitMs":0.0544,"gpuPassMs":0.009504,"outputRect":[0,0,160,160],"viewKey":"1:0:0:0"},{"arrayLayer":1,"cpuRecordAndSubmitMs":0.0549,"gpuPassMs":0.01088,"outputRect":[0,0,160,160],"viewKey":"1:1:0:0"}],"sourceCopyGpuMs":0.009504,"steadyStateAllocations":0},{"allocatedBytes":324096,"cpuSubmissionMs":0.0136,"fixtureFrameWallMsIncludingReadback":1.3235546874999995,"gpuPassMs":0.010272,"measuredFrames":64,"mode":"solid","perViewProcessing":[{"arrayLayer":0,"cpuRecordAndSubmitMs":0.0412,"gpuPassMs":0.010272,"outputRect":[0,0,160,160],"viewKey":"1:0:0:0"},{"arrayLayer":1,"cpuRecordAndSubmitMs":0.0488,"gpuPassMs":0.011072,"outputRect":[0,0,160,160],"viewKey":"1:1:0:0"}],"sourceCopyGpuMs":0.0104,"steadyStateAllocations":0},{"allocatedBytes":324096,"cpuSubmissionMs":0.0096,"fixtureFrameWallMsIncludingReadback":1.2766859375000001,"gpuPassMs":0.019008,"measuredFrames":64,"mode":"temporal-no-history-fallback","perViewProcessing":[{"arrayLayer":0,"cpuRecordAndSubmitMs":0.0261,"gpuPassMs":0.019008,"outputRect":[0,0,160,160],"viewKey":"1:0:0:0"},{"arrayLayer":1,"cpuRecordAndSubmitMs":0.0322,"gpuPassMs":0.01968,"outputRect":[0,0,160,160],"viewKey":"1:1:0:0"}],"sourceCopyGpuMs":0.010304,"steadyStateAllocations":0}],"multiviewShaderRequired":false,"peakAllocatedBytes":324096,"perViewProcessing":[{"arrayLayer":0,"cpuRecordAndSubmitMs":0.0261,"gpuPassMs":0.019008,"outputRect":[0,0,160,160],"viewKey":"1:0:0:0"},{"arrayLayer":1,"cpuRecordAndSubmitMs":0.0322,"gpuPassMs":0.01968,"outputRect":[0,0,160,160],"viewKey":"1:1:0:0"}],"queueFamily":0,"queueIndex":0,"sourceCopyGpuMs":0.010304,"submissionCount":2309,"synchronization":"explicit cooperative image declarations; bound queue barriers","synchronization2Required":false,"thirdPartyRuntimeTested":false,"timelineSemaphoresRequired":false,"timestampValidBits":64,"timingSemantics":"last completed per-operation timestamps; fixture wall time includes validation readback","validationEnabled":false}
+PASS: Vulkan GPU modes, stereo arrays, direct/intermediate, sRGB, rotation/depth/fallback, timestamps and cleanup
+<end of output>
+Test time =   3.53 sec
+----------------------------------------------------------
+Test Passed.
+"vulkan_gpu" end time: Oct 21 03:09 FLE Daylight Time
+"vulkan_gpu" time elapsed: 00:00:03
+----------------------------------------------------------
+
+9/17 Testing: vulkan_layer_array
+9/17 Test: vulkan_layer_array
+Command: "<workspace>/build-release/vulkan_layer_tests.exe" "<workspace>/build-release/bin/OpenXRFovExtension.dll"
+Directory: <workspace>/build-release
+"vulkan_layer_array" start time: Oct 21 03:09 FLE Daylight Time
+Output:
+----------------------------------------------------------
+Vulkan device: NVIDIA GeForce RTX 4060; validation=unavailable
+PASS: Vulkan OpenXR fixture, binding aliases, FIFO state, arrays/packed/separate eyes, exact layout/fence refusal and recovery, GPU output, depth, live policy and repeated teardown
+<end of output>
+Test time =   3.85 sec
+----------------------------------------------------------
+Test Passed.
+"vulkan_layer_array" end time: Oct 21 03:09 FLE Daylight Time
+"vulkan_layer_array" time elapsed: 00:00:03
+----------------------------------------------------------
+
+10/17 Testing: vulkan_layer_enable2
+10/17 Test: vulkan_layer_enable2
+Command: "<workspace>/build-release/vulkan_layer_tests.exe" "<workspace>/build-release/bin/OpenXRFovExtension.dll" "--vulkan2"
+Directory: <workspace>/build-release
+"vulkan_layer_enable2" start time: Oct 21 03:09 FLE Daylight Time
+Output:
+----------------------------------------------------------
+Vulkan device: NVIDIA GeForce RTX 4060; validation=unavailable
+PASS: Vulkan OpenXR fixture, binding aliases, FIFO state, arrays/packed/separate eyes, exact layout/fence refusal and recovery, GPU output, depth, live policy and repeated teardown
+<end of output>
+Test time =   3.61 sec
+----------------------------------------------------------
+Test Passed.
+"vulkan_layer_enable2" end time: Oct 21 03:09 FLE Daylight Time
+"vulkan_layer_enable2" time elapsed: 00:00:03
+----------------------------------------------------------
+
+11/17 Testing: vulkan_layer_separate
+11/17 Test: vulkan_layer_separate
+Command: "<workspace>/build-release/vulkan_layer_tests.exe" "<workspace>/build-release/bin/OpenXRFovExtension.dll" "--separate"
+Directory: <workspace>/build-release
+"vulkan_layer_separate" start time: Oct 21 03:09 FLE Daylight Time
+Output:
+----------------------------------------------------------
+Vulkan device: NVIDIA GeForce RTX 4060; validation=unavailable
+PASS: Vulkan OpenXR fixture, binding aliases, FIFO state, arrays/packed/separate eyes, exact layout/fence refusal and recovery, GPU output, depth, live policy and repeated teardown
+<end of output>
+Test time =   4.16 sec
+----------------------------------------------------------
+Test Passed.
+"vulkan_layer_separate" end time: Oct 21 03:09 FLE Daylight Time
+"vulkan_layer_separate" time elapsed: 00:00:04
+----------------------------------------------------------
+
+12/17 Testing: vulkan_layer_packed
+12/17 Test: vulkan_layer_packed
+Command: "<workspace>/build-release/vulkan_layer_tests.exe" "<workspace>/build-release/bin/OpenXRFovExtension.dll" "--packed"
+Directory: <workspace>/build-release
+"vulkan_layer_packed" start time: Oct 21 03:09 FLE Daylight Time
+Output:
+----------------------------------------------------------
+Vulkan device: NVIDIA GeForce RTX 4060; validation=unavailable
+PASS: Vulkan OpenXR fixture, binding aliases, FIFO state, arrays/packed/separate eyes, exact layout/fence refusal and recovery, GPU output, depth, live policy and repeated teardown
+<end of output>
+Test time =   4.10 sec
+----------------------------------------------------------
+Test Passed.
+"vulkan_layer_packed" end time: Oct 21 03:09 FLE Daylight Time
+"vulkan_layer_packed" time elapsed: 00:00:04
+----------------------------------------------------------
+
+13/17 Testing: vulkan_layer_depth
+13/17 Test: vulkan_layer_depth
+Command: "<workspace>/build-release/vulkan_layer_tests.exe" "<workspace>/build-release/bin/OpenXRFovExtension.dll" "--temporal"
+Directory: <workspace>/build-release
+"vulkan_layer_depth" start time: Oct 21 03:09 FLE Daylight Time
+Output:
+----------------------------------------------------------
+Vulkan device: NVIDIA GeForce RTX 4060; validation=unavailable
+PASS: Vulkan OpenXR fixture, binding aliases, FIFO state, arrays/packed/separate eyes, exact layout/fence refusal and recovery, GPU output, depth, live policy and repeated teardown
+<end of output>
+Test time =   4.37 sec
+----------------------------------------------------------
+Test Passed.
+"vulkan_layer_depth" end time: Oct 21 03:09 FLE Daylight Time
+"vulkan_layer_depth" time elapsed: 00:00:04
+----------------------------------------------------------
+
+14/17 Testing: vulkan_layer_depth_packed
+14/17 Test: vulkan_layer_depth_packed
+Command: "<workspace>/build-release/vulkan_layer_tests.exe" "<workspace>/build-release/bin/OpenXRFovExtension.dll" "--temporal" "--packed"
+Directory: <workspace>/build-release
+"vulkan_layer_depth_packed" start time: Oct 21 03:09 FLE Daylight Time
+Output:
+----------------------------------------------------------
+Vulkan device: NVIDIA GeForce RTX 4060; validation=unavailable
+PASS: Vulkan OpenXR fixture, binding aliases, FIFO state, arrays/packed/separate eyes, exact layout/fence refusal and recovery, GPU output, depth, live policy and repeated teardown
+<end of output>
+Test time =   3.82 sec
+----------------------------------------------------------
+Test Passed.
+"vulkan_layer_depth_packed" end time: Oct 21 03:09 FLE Daylight Time
+"vulkan_layer_depth_packed" time elapsed: 00:00:03
+----------------------------------------------------------
+
+15/17 Testing: vulkan_layer_depth_separate
+15/17 Test: vulkan_layer_depth_separate
+Command: "<workspace>/build-release/vulkan_layer_tests.exe" "<workspace>/build-release/bin/OpenXRFovExtension.dll" "--temporal" "--separate"
+Directory: <workspace>/build-release
+"vulkan_layer_depth_separate" start time: Oct 21 03:09 FLE Daylight Time
+Output:
+----------------------------------------------------------
+Vulkan device: NVIDIA GeForce RTX 4060; validation=unavailable
+PASS: Vulkan OpenXR fixture, binding aliases, FIFO state, arrays/packed/separate eyes, exact layout/fence refusal and recovery, GPU output, depth, live policy and repeated teardown
+<end of output>
+Test time =   4.19 sec
+----------------------------------------------------------
+Test Passed.
+"vulkan_layer_depth_separate" end time: Oct 21 03:10 FLE Daylight Time
+"vulkan_layer_depth_separate" time elapsed: 00:00:04
+----------------------------------------------------------
+
+16/17 Testing: vulkan_layer_mixed_extensions
+16/17 Test: vulkan_layer_mixed_extensions
+Command: "<workspace>/build-release/vulkan_layer_tests.exe" "<workspace>/build-release/bin/OpenXRFovExtension.dll" "--mixed"
+Directory: <workspace>/build-release
+"vulkan_layer_mixed_extensions" start time: Oct 21 03:10 FLE Daylight Time
+Output:
+----------------------------------------------------------
+Vulkan device: NVIDIA GeForce RTX 4060; validation=unavailable
+PASS: Vulkan OpenXR fixture, binding aliases, FIFO state, arrays/packed/separate eyes, exact layout/fence refusal and recovery, GPU output, depth, live policy and repeated teardown
+<end of output>
+Test time =   3.93 sec
+----------------------------------------------------------
+Test Passed.
+"vulkan_layer_mixed_extensions" end time: Oct 21 03:10 FLE Daylight Time
+"vulkan_layer_mixed_extensions" time elapsed: 00:00:03
+----------------------------------------------------------
+
+17/17 Testing: gui_localization
+17/17 Test: gui_localization
+Command: "<workspace>/build-release/gui_tests.exe"
+Directory: <workspace>/build-release
+"gui_localization" start time: Oct 21 03:10 FLE Daylight Time
+Output:
+----------------------------------------------------------
+GUI localization and preference tests passed
+<end of output>
+Test time =   0.14 sec
+----------------------------------------------------------
+Test Passed.
+"gui_localization" end time: Oct 21 03:10 FLE Daylight Time
+"gui_localization" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 21 03:10 FLE Daylight Time

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.4
+
+- Added Vulkan/enable2 session detection, native image tracking, and explicit diagnostic passthrough for unverified applications.
+- Added a cooperative Vulkan 1.1+ GPU backend with build-time validated SPIR-V for all six existing reconstruction methods, per-eye temporal/depth history, and direct/intermediate output paths.
+- Added explicit producer-fence/layout cooperation, nonblocking command reuse, checked image usage/format support, and completion-protected cleanup. No Vulkan API interception is installed; third-party games remain in passthrough.
+- Added Vulkan profile policy, detailed GPU/CPU/memory diagnostics, controlled GPU/OpenXR fixture tests, synchronization documentation, compatibility reports, frame evidence, and measured fixture overhead.
+- Preserved D3D11/D3D12 processing, localization, algorithm-specific settings, and the application icon.
+
 ## 0.1.3
 
 - Added the application icon from `Neon VR Focus Grid.png` for the executable, application windows, and taskbar.

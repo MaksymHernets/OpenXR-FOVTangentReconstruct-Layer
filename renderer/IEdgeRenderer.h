@@ -6,6 +6,11 @@
 #include <memory>
 #include <optional>
 namespace fov {
+struct VulkanImage {
+    VkImage image{};
+    XrSwapchainCreateInfo info{XR_TYPE_SWAPCHAIN_CREATE_INFO};
+    VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
+};
 struct alignas(16) ShaderConstants {
     float scale[2], bias[2];
     float rect[4];
@@ -17,8 +22,7 @@ struct alignas(16) ShaderConstants {
     float fillColor[4]{0, 0, 0, 1};
 };
 static_assert(sizeof(ShaderConstants) == 96);
-inline void setFillColor(ShaderConstants &c, const Profile &p, DXGI_FORMAT format) {
-    const bool srgb = format == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB || format == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+inline void setDisplayFillColor(ShaderConstants &c, const Profile &p, bool srgb) {
     for (size_t i = 0; i < 3; i++) {
         float value = p.color[i];
         // The color picker stores display RGB; sRGB RTVs apply encoding on write.
@@ -27,8 +31,13 @@ inline void setFillColor(ShaderConstants &c, const Profile &p, DXGI_FORMAT forma
     }
     c.fillColor[3] = 1;
 }
+inline void setFillColor(ShaderConstants &c, const Profile &p, DXGI_FORMAT format) {
+    setDisplayFillColor(
+        c, p, format == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB || format == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+}
 inline ShaderConstants constants(const XrCompositionLayerProjectionView &view, XrFovf original,
-                                 const XrSwapchainCreateInfo &ci, const Profile &p) {
+                                 const XrSwapchainCreateInfo &ci, const Profile &p,
+                                 std::optional<bool> srgbOverride = {}) {
     ShaderConstants c{};
     uvMapping(original, view.fov, c.scale, c.bias);
     auto r = view.subImage.imageRect;
@@ -46,7 +55,10 @@ inline ShaderConstants constants(const XrCompositionLayerProjectionView &view, X
     c.blurStrength = p.blurStrength;
     c.edgeSamples = p.edgeSamples;
     c.padding[0] = p.showFovBorders ? 1.f : 0.f;
-    setFillColor(c, p, static_cast<DXGI_FORMAT>(ci.format));
+    if (srgbOverride.has_value())
+        setDisplayFillColor(c, p, *srgbOverride);
+    else
+        setFillColor(c, p, static_cast<DXGI_FORMAT>(ci.format));
     return c;
 }
 inline bool supportedFormat(int64_t f) {
@@ -68,7 +80,24 @@ class IEdgeRenderer {
     virtual std::optional<double> gpuMilliseconds() const = 0;
     virtual std::optional<double> sourceCopyMilliseconds() const = 0;
     virtual std::optional<double> historyCopyMilliseconds() const = 0;
+    virtual void captureVulkan(uint64_t, const VulkanImage &) {
+        throw std::runtime_error("Not a Vulkan backend");
+    }
+    virtual void renderVulkan(uint64_t, const VulkanImage &, const ShaderConstants &, const XrRect2Di &) {
+        throw std::runtime_error("Not a Vulkan backend");
+    }
+    virtual bool supportsVulkan(const XrSwapchainCreateInfo &, std::string &) const {
+        return false;
+    }
+    virtual Json vulkanDiagnostics() const {
+        return Json::object();
+    }
+    virtual void forgetVulkanOutput(VkImage) {}
+    virtual bool hasFailed() const {
+        return false;
+    }
 };
+std::unique_ptr<IEdgeRenderer> makeVulkan(const XrGraphicsBindingVulkanKHR &);
 std::unique_ptr<IEdgeRenderer> makeD3D11(ID3D11Device *);
 std::unique_ptr<IEdgeRenderer> makeD3D12(ID3D12Device *, ID3D12CommandQueue *);
 ComPtr<ID3DBlob> compileShader(const char *entry, const char *target);

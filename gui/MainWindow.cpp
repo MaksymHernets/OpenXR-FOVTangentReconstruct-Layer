@@ -431,6 +431,8 @@ void MainWindow::loadEditor() {
                 break;
             }
     profileEnabled->setChecked(p.enabled);
+    editorVulkanEnabled = p.vulkanEnabled;
+    editorVulkanProcessing = p.vulkanProcessing;
     edgeEnabled->setChecked(p.edgeEnabled);
     horizontal->setValue(p.horizontal);
     vertical->setValue(p.vertical);
@@ -466,6 +468,8 @@ void MainWindow::loadEditor() {
 }
 void MainWindow::saveEditor() {
     fov::Profile p;
+    p.vulkanEnabled = editorVulkanEnabled;
+    p.vulkanProcessing = editorVulkanProcessing;
     p.enabled = profileEnabled->isChecked();
     p.edgeEnabled = edgeEnabled->isChecked();
     p.horizontal = (float)horizontal->value();

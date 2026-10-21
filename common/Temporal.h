@@ -55,7 +55,7 @@ struct TemporalFrame {
     XrFovf original{}, reduced{};
     XrTime time = 0;
     uint32_t width = 0, height = 0, depthWidth = 0, depthHeight = 0;
-    DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
+    int64_t format = 0;
     DepthMapping depth;
     bool hasDepth = false, trackingValid = false;
 };

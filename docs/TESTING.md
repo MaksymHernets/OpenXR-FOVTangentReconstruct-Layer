@@ -2,10 +2,12 @@
 
 The automated tests do not register the layer or modify the active runtime. Test data is isolated under the build directory or a temporary test directory.
 
-Version 0.1.1 adds **layer_temporal_d3d11**, **layer_temporal_d3d12**, **temporal_d3d11**, and **temporal_d3d12**. Version 0.1.2 adds **gui_localization**; the complete suite has eight tests when the GUI is enabled. New tests cover source-depth acquire/wait/release, output depth-chain removal, owned reference-space lifetime, invalid space/tracking, recenter and session reset, original-only history, stationary/rotated views, translation/parallax, standard/reversed-Z, D16/D24/D32/D32S8, invalid-depth fallback, independent eye content, GPU counter coverage, separate copy timings, and in-flight ring reuse. GPU tests enable Windows graphics debug layers when installed and reject reported errors/corruption.
+Version 0.1.1 adds **layer_temporal_d3d11**, **layer_temporal_d3d12**, **temporal_d3d11**, and **temporal_d3d12**. Version 0.1.2 adds **gui_localization**; version 0.1.4 adds nine Vulkan GPU/fixture tests, bringing the complete suite to seventeen tests when the GUI is enabled. New tests cover source-depth acquire/wait/release, output depth-chain removal, owned reference-space lifetime, invalid space/tracking, recenter and session reset, original-only history, stationary/rotated views, translation/parallax, standard/reversed-Z, D16/D24/D32/D32S8, invalid-depth fallback, independent eye content, GPU counter coverage, separate copy timings, and in-flight ring reuse. GPU tests enable Windows graphics debug layers when installed and reject reported errors/corruption.
 
 `ctest --test-dir build-release --output-on-failure` runs:
 
+- **vulkan_gpu:** actual SPIR-V execution for all six methods, RGBA/BGRA UNORM/sRGB, direct/intermediate output, independent eye slices, rotation and standard/reversed depth, D16/D24/D32/D32S8, confidence/fallback, timestamps, animated synthetic grid markers and allocation reuse.
+- **vulkan_layer_array**, **vulkan_layer_enable2**, **vulkan_layer_separate**, **vulkan_layer_packed**, **vulkan_layer_depth**, **vulkan_layer_depth_packed**, **vulkan_layer_depth_separate**, **vulkan_layer_mixed_extensions:** actual layer negotiation with a controlled Vulkan runtime fixture, native FOV before cooperation, exact image/fence declarations, acquisition indices, timeout recovery, refusal/recovery, output pixels, depth chain removal, policy reload and repeated explicit/implicit teardown. Runtime Vulkan validation is enabled if installed; the recorded local run lacked it. See [Vulkan evidence and limitations](VULKAN_IMPLEMENTATION_REPORT.md). A missing Vulkan loader/driver/GPU produces an explicit skip, not a GPU pass.
 - **gui_localization:** algorithm-specific parameter and label visibility for all six algorithms, preservation of hidden values, all eleven languages, embedded catalog completeness and placeholder consistency, independent locale selection, Arabic right-to-left switching and left-to-right restoration, technical diagnostic direction, live translation, unsaved editor preservation, localized UTC dates and chronological sorting, persisted settings across window recreation, invalid/malformed preference fallback, and isolation from rendering profiles. The test locates Qt libraries and plugins from the configured SDK.
 - **core_and_gpu:** malformed/bounded profiles, path normalization, concurrent atomic updates, asymmetric tangent-space projection, actual HLSL execution on D3D11 and D3D12 WARP, all five algorithms in UNORM and sRGB, array eye selection, bounded output, repeated resource reuse, application context-state restoration, cross-API pixel comparison, black/custom solid edges with unchanged center pixels, and GPU timestamp queries.
 - **layer_dispatch** and **layer_dispatch_d3d12:** load the DLL, reject invalid negotiation, negotiate/advance the next-layer chain, dispatch multiple instances, forward unhandled commands, create real D3D11/D3D12 WARP renderers against a test runtime, verify size/FOV reduction, output swapchain replacement, nonblocking output timeout/retry, extension-chain passthrough, pose preservation, immutable application frame structs, and explicit teardown. Connect to the actual named pipe, verify history without a GUI, and verify live configuration reload. The test runtime is a fixture, not a substitute product runtime.
@@ -49,7 +51,7 @@ On Settings, apply each language and locale and visit all six tabs. Confirm read
 
 Record actual results before treating hardware acceptance criteria as met.
 
-## Local results — 2026-10-20
+## Local results â€” 2026-10-20
 
 - Fresh CMake/Ninja Release build: passed, MSVC 19.51, Windows SDK 10.0.26100.0, Qt 6.11.1 x64.
 - CTest 0.1.1: seven tests passed, including the five existing algorithms in UNORM/sRGB, depth hook integration, and controlled temporal GPU scenarios on both APIs. These are controlled software-GPU tests, not a VDXR headset session.
@@ -58,3 +60,9 @@ Record actual results before treating hardware acceptance criteria as met.
 - Qt manager: launched from packaged binaries and rendered all five pages using the native Windows platform plugin.
 - HKLM registration/elevation/install/uninstall operations were not executed on this machine. Headset session rendering, real GPU performance, stereo comfort and resource soak tests remain outstanding.
 
+
+## Local 0.1.4 results — 2026-10-21
+
+All seventeen CTest tests passed, including nine actual Vulkan GPU/OpenXR fixture cases on an NVIDIA RTX 4060 with Khronos synchronization validation required and zero validation errors. Existing D3D11/D3D12 and GUI regressions passed. The manager's native Windows smoke test rendered all six tabs, and executable metadata reports 0.1.4. Vulkan is loaded dynamically; the layer has no mandatory Vulkan DLL import.
+
+The [Vulkan implementation report](VULKAN_IMPLEMENTATION_REPORT.md), [compatibility matrix](VULKAN_COMPATIBILITY_MATRIX.md) and [benchmark results](VULKAN_BENCHMARK_RESULTS.md) separate controlled execution from untested game/headset/runtime behavior. Ordinary third-party Vulkan applications remain diagnostic passthrough.

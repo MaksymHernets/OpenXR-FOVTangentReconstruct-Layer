@@ -36,7 +36,11 @@ The local pipe rejects remote clients and uses the user's default Windows securi
 
 - Real Quest 3 stereo alignment, comfort, peripheral quality, hardware GPU overhead and resource lifetime soak tests remain unverified.
 - Motion-vector/extra composition chains use unchanged passthrough. The temporal method consumes compatible plain KHR depth for its own reprojection, then omits that input depth from widened compositor output. Full-FOV compositor depth is not produced. Other algorithms retain depth-chain passthrough.
-- Secondary/quad views, quad/cylinder/cube composition reconstruction, Vulkan/OpenGL, protected/static images, MSAA and multisampled resolves are outside the processing path.
+- Secondary/quad views, quad/cylinder/cube composition reconstruction, OpenGL, protected/static images, MSAA and multisampled resolves are outside the processing path.
 - Startup render dimensions remain reduced if processing is subsequently disabled live; restart for native dimensions. A game that ignores recommendations may not gain performance.
 - GPU timing reports delayed individual source copies, history copies, and draw passes; it does not sum total frame cost or compositor work. Device removal may stop processing and report an error; it cannot repair the game's device.
 - No claims of OpenXR conformance, zero leaks under every game, or VDXR certification are made from the automated tests alone.
+
+## Vulkan 0.1.4
+
+Vulkan uses the same layer, FOV/projection mapping, temporal metadata, profiles and IPC through native renderer entry points. It requires explicit developer cooperation for image layout and producer completion. Other Vulkan applications keep native FOV and diagnostic passthrough; there is no implicit Vulkan dispatch layer. See [the backend design](VULKAN_BACKEND_DESIGN.md) and [synchronization proof](VULKAN_SYNCHRONIZATION.md). With ambiguous Vulkan plus Direct3D extension lists, early size recommendations stay native until a compatible session is known.

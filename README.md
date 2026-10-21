@@ -1,12 +1,12 @@
 # OpenXR FOV Extension
 
-Version **0.1.3**. Windows x64 implicit OpenXR API layer and Qt 6 **OpenXR FOV Manager**. The layer narrows each eye's projection in tangent space, recommends smaller render dimensions, and reconstructs the original projection using a separate runtime-owned output swapchain. Clamp, Gradient, Blur, Mirror, Solid Color, and **Temporal Depth Reconstruction** are implemented as GPU shaders for D3D11 and D3D12.
+Version **0.1.4**. Windows x64 implicit OpenXR API layer and Qt 6 **OpenXR FOV Manager**. The layer narrows each eye's projection in tangent space, recommends smaller render dimensions, and reconstructs the original projection using a separate runtime-owned output swapchain. Clamp, Gradient, Blur, Mirror, Solid Color, and **Temporal Depth Reconstruction** are implemented as GPU shaders for D3D11 and D3D12, with an experimental cooperative Vulkan 1.1+ compute backend.
 
 This is an initial implementation with local GPU and dispatch tests. **Quest 3 visual validation, VDXR session testing, performance measurements, and long-running game compatibility testing remain required.** See [testing](docs/TESTING.md) and [design and limitations](docs/DESIGN.md). Do not interpret a successful build as headset certification.
 
 ## Build
 
-Requirements: Windows 10/11 x64, Visual Studio 2022 or newer with Desktop development with C++ and a Windows 10/11 SDK, CMake 3.24+, Qt 6.5+ MSVC x64 (Widgets and Network). Python is not required for the product.
+Requirements: Windows 10/11 x64, Visual Studio 2022 or newer with Desktop development with C++ and a Windows 10/11 SDK, CMake 3.24+, Qt 6.5+ MSVC x64 (Widgets and Network). Bootstrap also installs pinned Vulkan headers and a verified glslang shader compiler for build-time SPIR-V validation. Python, glslang and the Vulkan SDK are not required to run the packaged product. The system Vulkan loader/driver is needed only for Vulkan sessions.
 
 ```powershell
 ./scripts/bootstrap.ps1
@@ -36,6 +36,16 @@ Set `FOV_BUILD_GUI=OFF` to build only the layer/control utility, `FOV_BUILD_TEST
 No registry writes are performed by building, testing, packaging, or simply opening the manager. UAC applies only when the user chooses a registration operation. Do not register multiple copies of the same layer. To bypass a registered layer temporarily, define `XR_FOV_DISABLE=1` before launching the game.
 
 Edge Fill shows only settings used by the selected algorithm: Gradient exposes stretch width, gradient strength, and samples; Blur exposes stretch width, radius, and strength; Solid Color exposes the fill color; Temporal Depth Reconstruction exposes its reconstruction block. Clamp and Mirror have no additional parameters. The enable switch and algorithm selector remain available. Switching algorithms preserves parameter values.
+
+## Vulkan support in 0.1.4
+
+Vulkan/enable2 sessions and swapchain lifecycles are detected and tracked. **Ordinary third-party Vulkan games remain in diagnostic passthrough with native FOV and size recommendations.** GPU reconstruction currently requires a developer-owned application that explicitly provides the exact image layout, session queue and completed producer fence through the experimental cooperation API. An OpenXR API layer alone does not observe arbitrary Vulkan layouts or cross-queue synchronization.
+
+The validated cooperative path supports all six algorithms, per-eye temporal rotation/depth reconstruction, RGBA/BGRA UNORM/sRGB, separate-eye/array/packed images, direct storage or private intermediate output, and GPU/CPU/memory diagnostics. Existing D3D11/D3D12 behavior remains available. Selecting an algorithm or setting `auto` cannot enable unverified Vulkan processing.
+
+Global/per-game profiles may contain `"vulkan": {"enabled": true, "processing": "auto"}`; `enabled=false` or `processing="passthrough"` disables the Vulkan path. The manager preserves this advanced policy when saving profiles. These options do not change Direct3D profiles.
+
+See the [architecture audit](docs/VULKAN_ARCHITECTURE_AUDIT.md), [backend design](docs/VULKAN_BACKEND_DESIGN.md), [swapchain handling](docs/VULKAN_SWAPCHAIN_HANDLING.md), [synchronization contract](docs/VULKAN_SYNCHRONIZATION.md), [reconstruction/integration guide](docs/VULKAN_RECONSTRUCTION.md), [compatibility matrix](docs/VULKAN_COMPATIBILITY_MATRIX.md), [measurements](docs/VULKAN_BENCHMARK_RESULTS.md), and [implementation report](docs/VULKAN_IMPLEMENTATION_REPORT.md). Controlled GPU fixtures do not establish SteamVR, VDXR or third-party game compatibility.
 
 ## Language and locale
 
