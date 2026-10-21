@@ -2,6 +2,7 @@
 #include "ConfigManager.h"
 #include "RegistryManager.h"
 #include <shellapi.h>
+#include <system_error>
 namespace fov {
 static constexpr auto key = L"SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit";
 std::filesystem::path moduleDirectory() {
@@ -35,44 +36,60 @@ Registration registration(const std::filesystem::path &p) {
         return Registration::Invalid;
     return v ? Registration::Disabled : Registration::Enabled;
 }
+std::vector<std::filesystem::path> activeRegistrationConflicts(const std::filesystem::path &p) {
+    HKEY existing{};
+    auto opened = RegOpenKeyExW(HKEY_LOCAL_MACHINE, key, 0, KEY_QUERY_VALUE | KEY_WOW64_64KEY, &existing);
+    if (opened == ERROR_FILE_NOT_FOUND)
+        return {};
+    if (opened != ERROR_SUCCESS)
+        throw std::system_error(opened, std::system_category(),
+                                "Cannot inspect existing layer registrations");
+    std::vector<std::filesystem::path> conflicts;
+    try {
+        for (DWORD index = 0;; ++index) {
+            wchar_t name[32768];
+            DWORD length = 32768;
+            auto status = RegEnumValueW(existing, index, name, &length, nullptr, nullptr, nullptr, nullptr);
+            if (status == ERROR_NO_MORE_ITEMS)
+                break;
+            if (status != ERROR_SUCCESS)
+                throw std::system_error(status, std::system_category(),
+                                        "Cannot enumerate layer registrations");
+            std::wstring candidate(name, length);
+            if (normalizePath(utf8(candidate)) == normalizePath(utf8(p.wstring())))
+                continue;
+            DWORD type = 0, value = 1, bytes = sizeof(value);
+            status = RegQueryValueExW(existing, candidate.c_str(), nullptr, &type,
+                                      reinterpret_cast<BYTE *>(&value), &bytes);
+            // Match loader activation semantics: only REG_DWORD zero is enabled.
+            // A disabled old installation is not a competing active layer.
+            if (status == ERROR_FILE_NOT_FOUND || status == ERROR_MORE_DATA)
+                continue;
+            if (status != ERROR_SUCCESS)
+                throw std::system_error(status, std::system_category(), "Cannot read layer activation state");
+            if (type != REG_DWORD || bytes != sizeof(value) || value != 0)
+                continue;
+            auto manifest = loadJson(candidate);
+            if (manifest.contains("api_layer") && manifest["api_layer"].is_object() &&
+                manifest["api_layer"].value("name", "") == "XR_APILAYER_FOV_extension")
+                conflicts.emplace_back(candidate);
+        }
+    } catch (...) {
+        RegCloseKey(existing);
+        throw;
+    }
+    RegCloseKey(existing);
+    return conflicts;
+}
 void setRegistration(const std::filesystem::path &p, bool enabled) {
     validateManifest(p);
-    // Detect another registered copy without modifying its value. The caller can
-    // uninstall that package explicitly before moving this layer to a new folder.
     if (enabled) {
-        HKEY existing{};
-        if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, key, 0, KEY_QUERY_VALUE | KEY_WOW64_64KEY, &existing) ==
-            ERROR_SUCCESS) {
-            std::wstring duplicate;
-            try {
-                for (DWORD index = 0;; index++) {
-                    wchar_t name[32768];
-                    DWORD length = 32768;
-                    auto status =
-                        RegEnumValueW(existing, index, name, &length, nullptr, nullptr, nullptr, nullptr);
-                    if (status == ERROR_NO_MORE_ITEMS)
-                        break;
-                    if (status != ERROR_SUCCESS)
-                        throw std::runtime_error("Cannot inspect existing layer registrations");
-                    std::wstring candidate(name, length);
-                    if (normalizePath(utf8(candidate)) == normalizePath(utf8(p.wstring())))
-                        continue;
-                    auto manifest = loadJson(candidate);
-                    if (manifest.contains("api_layer") && manifest["api_layer"].is_object() &&
-                        manifest["api_layer"].value("name", "") == "XR_APILAYER_FOV_extension") {
-                        duplicate = candidate;
-                        break;
-                    }
-                }
-            } catch (...) {
-                RegCloseKey(existing);
-                throw;
-            }
-            RegCloseKey(existing);
-            if (!duplicate.empty())
-                throw std::runtime_error("Another copy is already registered. Run its uninstaller first: " +
-                                         utf8(duplicate));
-        }
+        auto conflicts = activeRegistrationConflicts(p);
+        if (!conflicts.empty())
+            throw std::system_error(
+                ERROR_ALREADY_EXISTS, std::system_category(),
+                "Another active copy is already registered. Disable or uninstall that copy first: " +
+                    utf8(conflicts.front().wstring()));
     }
     HKEY h{};
     auto r = RegCreateKeyExW(HKEY_LOCAL_MACHINE, key, 0, nullptr, 0, KEY_SET_VALUE | KEY_WOW64_64KEY, nullptr,
@@ -83,7 +100,7 @@ void setRegistration(const std::filesystem::path &p, bool enabled) {
         RegCloseKey(h);
     }
     if (r != ERROR_SUCCESS)
-        throw std::runtime_error("Registry write failed: " + std::to_string(r));
+        throw std::system_error(r, std::system_category(), "Registry write failed");
 }
 void unregisterLayer(const std::filesystem::path &p) {
     HKEY h{};
@@ -95,7 +112,32 @@ void unregisterLayer(const std::filesystem::path &p) {
         RegCloseKey(h);
     }
     if (r != ERROR_SUCCESS && r != ERROR_FILE_NOT_FOUND)
-        throw std::runtime_error("Registry removal failed: " + std::to_string(r));
+        throw std::system_error(r, std::system_category(), "Registry removal failed");
+}
+std::string registrationFailureMessage(int code) {
+    if (code == ERROR_CANCELLED)
+        return "Windows administrator approval was cancelled.";
+    if (code == ERROR_ALREADY_EXISTS) {
+        try {
+            auto conflicts = activeRegistrationConflicts(moduleDirectory() / L"OpenXRFovExtension.json");
+            if (!conflicts.empty())
+                return "Another active copy is already registered. Disable or uninstall that copy first: " +
+                       utf8(conflicts.front().wstring());
+        } catch (const std::exception &e) {
+            return e.what();
+        }
+    }
+    if (code == ERROR_INVALID_DATA) {
+        try {
+            validateManifest(moduleDirectory() / L"OpenXRFovExtension.json");
+        } catch (const std::exception &e) {
+            return e.what();
+        }
+    }
+    if (code == ERROR_ACCESS_DENIED)
+        return "Windows denied the registry write. Run the extracted package's installation helper with "
+               "administrator approval.";
+    return std::system_category().message(code);
 }
 std::wstring activeRuntime() {
     wchar_t b[32768]{};

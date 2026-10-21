@@ -72,3 +72,9 @@ The [Vulkan implementation report](VULKAN_IMPLEMENTATION_REPORT.md), [compatibil
 Nineteen tests passed, including real D3D12 Tier 2 scene VRS, pipeline-statistics workload reduction, center/edge readback checks, state restoration, projection/streamer-baseline tests, the existing D3D11/D3D12 reconstruction suites, and nine Vulkan cases with required Khronos synchronization validation. D3D12 debug validation was enabled. Native Windows UI smoke tests covered all seven tabs, full/reduced FFR previews and Arabic layout; executable metadata reports 0.1.5.
 
 See [FFR verification](FFR_TESTING.md) and [measurements](FFR_BENCHMARK_RESULTS.md). Hubris/headset/runtime frame-deadline acceptance remains unverified; synthetic captures are not game evidence.
+
+## Registration upgrade regression — 0.1.6
+
+`registration_upgrade` runs the real registration functions with process-local `RegOverridePredefKey` redirection of HKLM to a uniquely named temporary HKCU key. It reproduces the old failure when an older same-layer copy is disabled, then verifies new enable succeeds while the old value remains disabled. It also checks active-duplicate refusal without mutation, exact conflicting paths, repeated enable/uninstall, Unicode paths, and removal when a package DLL is missing. The temporary user key is removed and the predefined-key override restored; system HKLM registrations are never changed by this test.
+
+The managed sandbox may prohibit even temporary HKCU writes. Run this test outside that sandbox using the ordinary user account; administrator registry access is not required. The product still requires administrator approval to change real HKLM loader registrations. `FovLayerControl.exe --check` is read-only and requires no elevation.

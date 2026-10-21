@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.6
+
+- Fixed registration after an older installation was disabled: only active same-layer registrations now block enabling a different copy. Disabled installations and other layers are preserved.
+- Added read-only `FovLayerControl.exe --check`, specific helper exit codes and actionable registration diagnostics in the manager and installer.
+- Added isolated registry tests covering upgrades, duplicate protection, Unicode paths and idempotent removal without changing system HKLM registrations.
+
 ## 0.1.5
 
 - Added independent adaptive FFR settings and per-eye zone previews in all eleven languages, with persistent full/reduced-FOV quality settings.

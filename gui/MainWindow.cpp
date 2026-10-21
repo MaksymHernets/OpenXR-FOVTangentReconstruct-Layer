@@ -87,10 +87,10 @@ MainWindow::MainWindow() {
         connect(b, &QPushButton::clicked, this, [this, action = std::wstring(item.second)]() {
             int r = fov::runRegistrationHelper(action, true);
             if (r)
-                QMessageBox::warning(
-                    this, translate("Registration"),
-                    translate("Registry operation failed (code %1). Administrator approval is required.")
-                        .arg(r));
+                QMessageBox::warning(this, translate("Registration"),
+                                     translate("Registration failed (code %1):\n%2")
+                                         .arg(r)
+                                         .arg(QString::fromStdString(fov::registrationFailureMessage(r))));
             refresh();
         });
     }

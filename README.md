@@ -1,6 +1,6 @@
 # OpenXR FOV Extension
 
-Version **0.1.5**. Windows x64 implicit OpenXR API layer and Qt 6 **OpenXR FOV Manager**. The layer narrows each eye's projection in tangent space, recommends smaller render dimensions, and reconstructs the original projection using a separate runtime-owned output swapchain. Clamp, Gradient, Blur, Mirror, Solid Color, and **Temporal Depth Reconstruction** are implemented as GPU shaders for D3D11 and D3D12, with an experimental cooperative Vulkan 1.1+ compute backend.
+Version **0.1.6**. Windows x64 implicit OpenXR API layer and Qt 6 **OpenXR FOV Manager**. The layer narrows each eye's projection in tangent space, recommends smaller render dimensions, and reconstructs the original projection using a separate runtime-owned output swapchain. Clamp, Gradient, Blur, Mirror, Solid Color, and **Temporal Depth Reconstruction** are implemented as GPU shaders for D3D11 and D3D12, with an experimental cooperative Vulkan 1.1+ compute backend.
 
 This is an initial implementation with local GPU and dispatch tests. **Quest 3 visual validation, VDXR session testing, performance measurements, and long-running game compatibility testing remain required.** See [testing](docs/TESTING.md) and [design and limitations](docs/DESIGN.md). Do not interpret a successful build as headset certification.
 
@@ -31,9 +31,11 @@ Set `FOV_BUILD_GUI=OFF` to build only the layer/control utility, `FOV_BUILD_TEST
 3. Select VDXR in Virtual Desktop Streamer using its normal controls, connect the headset, and start a native OpenXR game. This project never edits the game or runtime files.
 4. Open `OpenXRFovManager.exe`. On Games, select the executable and click **Edit selected profile**. FOV Settings and Edge Fill edit the profile named at the top. **Edit global defaults** returns to defaults. Click **Save profile** after editing.
 5. Use Dashboard **Disable layer** to set the registry value to `1`, or run `FovLayerControl.exe --disable`. Restart the game. Enabling uses `--enable`. These operations never unload an active DLL.
-6. Run `uninstall_layer.bat` to remove only this package's registry value. Configuration and history remain intact. Run the old package's uninstaller before moving a registered package to another location.
+6. Run `uninstall_layer.bat` to remove only this package's registry value. Configuration and history remain intact. Disable or uninstall an active old copy before enabling a package in another location. Disabled copies do not block registration.
 
-No registry writes are performed by building, testing, packaging, or simply opening the manager. UAC applies only when the user chooses a registration operation. Do not register multiple copies of the same layer. To bypass a registered layer temporarily, define `XR_FOV_DISABLE=1` before launching the game.
+If registration fails, run `FovLayerControl.exe --check` from the extracted package for a read-only manifest/conflict diagnostic. Only an enabled (`REG_DWORD 0`) copy with the same layer name blocks enabling a different copy. The manager and installer now report the actual error instead of attributing every failure to administrator privileges.
+
+Building, packaging and simply opening the manager do not change OpenXR registrations. Registration tests write only an isolated temporary HKCU key and redirect HKLM inside the test process; system loader registrations are untouched. UAC applies only when the user chooses a registration operation. Do not register multiple copies of the same layer. To bypass a registered layer temporarily, define `XR_FOV_DISABLE=1` before launching the game.
 
 Edge Fill shows only settings used by the selected algorithm: Gradient exposes stretch width, gradient strength, and samples; Blur exposes stretch width, radius, and strength; Solid Color exposes the fill color; Temporal Depth Reconstruction exposes its reconstruction block. Clamp and Mirror have no additional parameters. The enable switch and algorithm selector remain available. Switching algorithms preserves parameter values.
 
