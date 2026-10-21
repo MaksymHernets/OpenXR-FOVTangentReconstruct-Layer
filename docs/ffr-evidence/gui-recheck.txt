@@ -1,0 +1,20 @@
+-- Configuring done (0.3s)
+-- Generating done (0.4s)
+-- Build files have been written to: <workspace>/build-015
+[1/10] Running rcc for resource translations
+[2/10] Running rcc for resource test_translations
+[3/10] Building CXX object CMakeFiles\OpenXRFovManager.dir\build-015\.qt\rcc\qrc_translations.cpp.obj
+[4/10] Building CXX object CMakeFiles\OpenXRFovManager.dir\gui\FFRPanel.cpp.obj
+[5/10] Building CXX object CMakeFiles\gui_tests.dir\gui\FFRPanel.cpp.obj
+[6/10] Building CXX object CMakeFiles\gui_tests.dir\build-015\.qt\rcc\qrc_test_translations.cpp.obj
+[7/10] Building CXX object CMakeFiles\OpenXRFovManager.dir\gui\MainWindow.cpp.obj
+[8/10] Building CXX object CMakeFiles\gui_tests.dir\gui\MainWindow.cpp.obj
+[9/10] Linking CXX executable bin\OpenXRFovManager.exe
+[10/10] Linking CXX executable gui_tests.exe
+Test project <workspace>/build-015
+    Start 19: gui_localization
+1/1 Test #19: gui_localization .................   Passed    0.16 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   0.18 sec

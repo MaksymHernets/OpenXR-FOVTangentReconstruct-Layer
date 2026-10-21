@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(OpenXRFovExtension VERSION 0.1.4 LANGUAGES CXX)
+project(OpenXRFovExtension VERSION 0.1.5 LANGUAGES CXX)
 if(NOT WIN32 OR NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
   message(FATAL_ERROR "Windows x64 is required")
 endif()
@@ -26,7 +26,7 @@ add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/generated/VulkanShader.h"
   COMMAND "${FOV_GLSLANG}" --target-env vulkan1.1 --spirv-val -V "${CMAKE_CURRENT_SOURCE_DIR}/shaders/Vulkan.comp" -o "${CMAKE_CURRENT_BINARY_DIR}/generated/Vulkan.spv"
   COMMAND ${CMAKE_COMMAND} "-DINPUT=${CMAKE_CURRENT_BINARY_DIR}/generated/Vulkan.spv" "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/generated/VulkanShader.h" -P "${CMAKE_CURRENT_SOURCE_DIR}/scripts/embed-spirv.cmake"
   DEPENDS shaders/Vulkan.comp scripts/embed-spirv.cmake VERBATIM)
-add_library(fov_renderers STATIC renderer/D3D11EdgeRenderer.cpp renderer/D3D12EdgeRenderer.cpp renderer/Shader.cpp
+add_library(fov_renderers STATIC renderer/D3D11EdgeRenderer.cpp renderer/D3D12EdgeRenderer.cpp renderer/D3D12FFR.cpp renderer/Shader.cpp
   renderer/VulkanContext.cpp renderer/VulkanEdgeRenderer.cpp "${CMAKE_CURRENT_BINARY_DIR}/generated/VulkanShader.h")
 target_link_libraries(fov_renderers PUBLIC d3d11 d3d12 dxgi d3dcompiler)
 file(READ shaders/EdgeFill.hlsl FOV_SHADER)
@@ -47,7 +47,7 @@ if(FOV_BUILD_GUI)
   configure_file(gui/Manager.rc.in generated/Manager.rc @ONLY)
   set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/generated/Manager.rc" PROPERTIES
     OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/gui/assets/app.ico")
-  add_executable(OpenXRFovManager WIN32 gui/main.cpp gui/MainWindow.cpp gui/Localization.cpp
+  add_executable(OpenXRFovManager WIN32 gui/main.cpp gui/MainWindow.cpp gui/FFRPanel.cpp gui/Localization.cpp
     "${CMAKE_CURRENT_BINARY_DIR}/generated/Manager.rc")
   qt_add_resources(OpenXRFovManager translations PREFIX "/i18n" FILES gui/translations.json)
   qt_add_resources(OpenXRFovManager application_icon PREFIX "/icons" FILES "Neon VR Focus Grid.png")
@@ -61,6 +61,13 @@ foreach(target OpenXRFovExtension FovLayerControl)
 endforeach()
 if(FOV_BUILD_TESTS)
   enable_testing()
+  add_executable(ffr_tests tests/FFRTests.cpp)
+  target_link_libraries(ffr_tests PRIVATE fov_common)
+  add_test(NAME ffr_projection_and_config COMMAND ffr_tests)
+  add_executable(ffr_hardware_tests tests/FFRHardwareTests.cpp)
+  target_link_libraries(ffr_hardware_tests PRIVATE fov_common fov_renderers)
+  add_test(NAME ffr_d3d12_hardware COMMAND ffr_hardware_tests "$<TARGET_FILE:OpenXRFovExtension>")
+  set_tests_properties(ffr_d3d12_hardware PROPERTIES TIMEOUT 180 SKIP_RETURN_CODE 77)
   add_executable(fov_tests tests/CoreTests.cpp)
   target_link_libraries(fov_tests PRIVATE fov_common fov_renderers)
   add_test(NAME core_and_gpu COMMAND fov_tests)
@@ -95,7 +102,7 @@ if(FOV_BUILD_TESTS)
   add_test(NAME vulkan_layer_mixed_extensions COMMAND vulkan_layer_tests "$<TARGET_FILE:OpenXRFovExtension>" --mixed)
   set_tests_properties(vulkan_layer_array vulkan_layer_enable2 vulkan_layer_separate vulkan_layer_packed vulkan_layer_depth vulkan_layer_depth_packed vulkan_layer_depth_separate vulkan_layer_mixed_extensions PROPERTIES TIMEOUT 60 SKIP_RETURN_CODE 77)
   if(FOV_BUILD_GUI)
-    add_executable(gui_tests tests/GuiTests.cpp gui/MainWindow.cpp gui/Localization.cpp)
+    add_executable(gui_tests tests/GuiTests.cpp gui/MainWindow.cpp gui/FFRPanel.cpp gui/Localization.cpp)
     qt_add_resources(gui_tests test_translations PREFIX "/i18n" FILES gui/translations.json)
     target_link_libraries(gui_tests PRIVATE fov_common Qt6::Widgets Qt6::Network)
     target_compile_definitions(gui_tests PRIVATE FOV_VERSION="${PROJECT_VERSION}")

@@ -2,6 +2,9 @@
 #include "gui/Localization.h"
 #include <QApplication>
 #include <QComboBox>
+#include <QCheckBox>
+#include <QSpinBox>
+#include <QLabel>
 #include <QDoubleSpinBox>
 #include <QDateTime>
 #include <QFile>
@@ -51,7 +54,7 @@ int main(int argc, char **argv) {
         auto language = window.findChild<QComboBox *>("languageChoice");
         auto locale = window.findChild<QComboBox *>("localeChoice");
         auto apply = window.findChild<QPushButton *>("applySettings");
-        require(tabs && tabs->count() == 6 && language && locale && apply, "settings controls");
+        require(tabs && tabs->count() == 7 && language && locale && apply, "settings controls");
         require(language->count() == 11 && locale->count() == 12, "supported languages and locales");
         require(ui::language() == "en" && ui::locale() == "en_US", "default preferences");
         auto algorithm = window.findChild<QComboBox *>("edgeAlgorithm");
@@ -59,10 +62,36 @@ int main(int argc, char **argv) {
         auto edgeForm = qobject_cast<QFormLayout *>(algorithm->parentWidget()->layout());
         require(edgeForm && edgeForm->rowCount() == 9, "algorithm parameter form");
         auto stretch = qobject_cast<QDoubleSpinBox *>(edgeForm->itemAt(3, QFormLayout::FieldRole)->widget());
-        auto spin = window.findChildren<QDoubleSpinBox *>().front();
+        auto spin = window.findChild<QDoubleSpinBox *>("horizontalFov");
         spin->setValue(.73);
         stretch->setValue(.23);
         auto value = spin->value();
+        auto ffrEnabled = window.findChild<QCheckBox *>("ffrEnabled");
+        auto ffrFull = window.findChild<QSpinBox *>("ffrFullMiddle");
+        auto ffrReduced = window.findChild<QSpinBox *>("ffrReducedMiddle");
+        auto ffrOuter = window.findChild<QSpinBox *>("ffrOuter");
+        auto ffrMode = window.findChild<QLabel *>("ffrMode");
+        require(ffrEnabled && ffrFull && ffrReduced && ffrOuter && ffrMode, "independent FFR panel");
+        ffrEnabled->setChecked(true);
+        ffrFull->setValue(50);
+        ffrReduced->setValue(75);
+        ffrOuter->setValue(10);
+        std::array<QDoubleSpinBox *, 2> fovSpins{spin, window.findChild<QDoubleSpinBox *>("verticalFov")};
+        fovSpins[0]->setValue(1);
+        fovSpins[1]->setValue(1);
+        require(!ffrOuter->isHidden() && ffrReduced->isHidden(), "full-FOV three-zone controls");
+        fovSpins[0]->setValue(.85);
+        require(ffrOuter->isHidden() && !ffrReduced->isHidden(),
+                "anisotropic reduction selects two-zone controls");
+        fovSpins[0]->setValue(1);
+        fovSpins[1]->setValue(.8);
+        require(ffrOuter->isHidden(), "vertical reduction selects two-zone controls");
+        fovSpins[1]->setValue(1);
+        require(ffrFull->value() == 50 && ffrReduced->value() == 75 && ffrOuter->value() == 10,
+                "mode switches preserve independent quality");
+        fovSpins[0]->setValue(value);
+        fovSpins[1]->setValue(.8);
+        require(algorithm->currentIndex() == 1, "FFR does not change reconstruction algorithm");
         QFile file(":/i18n/gui/translations.json");
         require(file.open(QIODevice::ReadOnly), "embedded catalog");
         const auto catalog = QJsonDocument::fromJson(file.readAll()).object();
@@ -138,6 +167,10 @@ int main(int argc, char **argv) {
         for (auto button : window.findChildren<QPushButton *>())
             if (button->property("sourceText").toString() == "Save profile")
                 button->click();
+        auto savedFfr = fov::parseProfile(fov::loadJson(path / L"config.json")["defaults"]).ffr;
+        require(savedFfr.enabled && savedFfr.fullMiddleQuality == 50 && savedFfr.reducedMiddleQuality == 75 &&
+                    savedFfr.outerQuality == 10,
+                "FFR editor persistence");
         auto savedVulkan = fov::loadJson(path / L"config.json")["defaults"]["vulkan"];
         require(savedVulkan["enabled"] == false && savedVulkan["processing"] == "passthrough",
                 "Editing a profile preserves Vulkan-specific policy");

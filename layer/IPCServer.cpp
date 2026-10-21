@@ -29,7 +29,7 @@ void IPCServer::run(std::stop_token stop) {
                          PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT | PIPE_REJECT_REMOTE_CLIENTS, 1,
                          65536, 0, 0, nullptr);
     bool connected = false, recorded = false;
-    std::string lastApi, lastStatus, lastError;
+    std::string lastApi, lastStatus, lastError, lastFFR;
     while (!stop.stop_requested()) {
         try {
             current.store(std::make_shared<const Profile>(loadProfile(path)));
@@ -53,7 +53,11 @@ void IPCServer::run(std::stop_token stop) {
                 lastApi = api;
             }
             auto status = j.value("status", ""), errorMessage = j.value("lastError", "");
-            if (profile().logging && (status != lastStatus || errorMessage != lastError)) {
+            auto ffr = j.value("ffr", Json::object());
+            ffr.erase("displayTime");
+            auto ffrText = ffr.empty() ? std::string{} : ffr.dump();
+            if (profile().logging &&
+                (status != lastStatus || errorMessage != lastError || ffrText != lastFFR)) {
                 auto logfile =
                     dataDirectory() / (L"layer-" + std::to_wstring(GetCurrentProcessId()) + L".log");
                 std::error_code ec;
@@ -65,7 +69,21 @@ void IPCServer::run(std::stop_token stop) {
                 }
                 std::ofstream out(logfile, std::ios::app);
                 out << utcNow() << " " << app << " [" << api << "] " << status << " " << errorMessage << "\n";
+                if (ffrText != lastFFR && ffr.contains("eyes"))
+                    for (auto &eye : ffr["eyes"]) {
+                        out << "[FFR] Eye " << eye.value("eye", 0)
+                            << " Effective FOV Scale: " << eye["effectiveScale"].dump()
+                            << " Mode: " << eye.value("mode", "")
+                            << " Zone 1: Full Quality; Zone 2: Reduced Quality; "
+                            << (eye.value("renderedZones", 3) == 3
+                                    ? "Zone 3: Rendered Outer"
+                                    : "Cropped Region: Existing Reconstruction")
+                            << " Reconstruction Mode: " << ffr.value("reconstructionMode", "")
+                            << " Shading Rate Backend: " << ffr.value("capabilities", Json::object()).dump()
+                            << " Applied Shading Rates: unconfirmed; configured map only\n";
+                    }
             }
+            lastFFR = ffrText;
             lastStatus = status;
             lastError = errorMessage;
             if (pipe != INVALID_HANDLE_VALUE) {

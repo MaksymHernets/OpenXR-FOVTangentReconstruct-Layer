@@ -1,0 +1,240 @@
+{
+  "cases": [
+    {
+      "case": 0,
+      "plan": {
+        "activeFov": [
+          -0.8999999761581421,
+          0.6499999761581421,
+          0.800000011920929,
+          -0.699999988079071
+        ],
+        "center": [
+          0.6237286925315857,
+          0.5500420331954956
+        ],
+        "centerRadii": [
+          0.2199999988079071,
+          0.2199999988079071
+        ],
+        "cropIsRenderedZone": false,
+        "effectiveScale": [
+          1.0,
+          1.0
+        ],
+        "middleQuality": 65,
+        "middleRadii": [
+          0.3762713074684143,
+          0.4000000059604645
+        ],
+        "mode": "ThreeRenderedZones",
+        "outerQuality": 15,
+        "renderedRect": [
+          0.0,
+          0.0,
+          1.0,
+          1.0
+        ],
+        "renderedZones": 3,
+        "runtimeBaselineFov": [
+          -0.8999999761581421,
+          0.6499999761581421,
+          0.800000011920929,
+          -0.699999988079071
+        ],
+        "valid": true
+      },
+      "reconstructed": false,
+      "restoredFullRateDraw": true
+    },
+    {
+      "case": 1,
+      "plan": {
+        "activeFov": [
+          -0.7894449830055237,
+          0.5464004874229431,
+          0.6890324950218201,
+          -0.59294593334198
+        ],
+        "center": [
+          0.6237287521362305,
+          0.5500420928001404
+        ],
+        "centerRadii": [
+          0.2199999988079071,
+          0.2199999988079071
+        ],
+        "cropIsRenderedZone": false,
+        "effectiveScale": [
+          0.800000011920929,
+          0.800000011920929
+        ],
+        "middleQuality": 65,
+        "middleRadii": [
+          0.37627124786376953,
+          0.4000000059604645
+        ],
+        "mode": "TwoRenderedZonesWithCrop",
+        "outerQuality": null,
+        "renderedRect": [
+          0.12474570423364639,
+          0.11000839620828629,
+          0.800000011920929,
+          0.800000011920929
+        ],
+        "renderedZones": 2,
+        "runtimeBaselineFov": [
+          -0.8999999761581421,
+          0.6499999761581421,
+          0.800000011920929,
+          -0.699999988079071
+        ],
+        "valid": true
+      },
+      "reconstructed": true,
+      "restoredFullRateDraw": true
+    },
+    {
+      "case": 2,
+      "plan": {
+        "activeFov": [
+          -0.7894449830055237,
+          0.5464004874229431,
+          0.800000011920929,
+          -0.699999988079071
+        ],
+        "center": [
+          0.6237287521362305,
+          0.5500420331954956
+        ],
+        "centerRadii": [
+          0.2199999988079071,
+          0.2199999988079071
+        ],
+        "cropIsRenderedZone": false,
+        "effectiveScale": [
+          0.800000011920929,
+          1.0
+        ],
+        "middleQuality": 65,
+        "middleRadii": [
+          0.37627124786376953,
+          0.4000000059604645
+        ],
+        "mode": "TwoRenderedZonesWithCrop",
+        "outerQuality": null,
+        "renderedRect": [
+          0.12474570423364639,
+          0.0,
+          0.800000011920929,
+          1.0
+        ],
+        "renderedZones": 2,
+        "runtimeBaselineFov": [
+          -0.8999999761581421,
+          0.6499999761581421,
+          0.800000011920929,
+          -0.699999988079071
+        ],
+        "valid": true
+      },
+      "reconstructed": true,
+      "restoredFullRateDraw": true
+    },
+    {
+      "case": 3,
+      "plan": {
+        "activeFov": [
+          -0.8999999761581421,
+          0.6499999761581421,
+          0.800000011920929,
+          -0.699999988079071
+        ],
+        "center": [
+          0.6237286925315857,
+          0.5500420331954956
+        ],
+        "centerRadii": [
+          0.2199999988079071,
+          0.2199999988079071
+        ],
+        "cropIsRenderedZone": false,
+        "effectiveScale": [
+          1.0,
+          1.0
+        ],
+        "middleQuality": 65,
+        "middleRadii": [
+          0.3762713074684143,
+          0.4000000059604645
+        ],
+        "mode": "ThreeRenderedZones",
+        "outerQuality": 15,
+        "renderedRect": [
+          0.0,
+          0.0,
+          1.0,
+          1.0
+        ],
+        "renderedZones": 3,
+        "runtimeBaselineFov": [
+          -0.8999999761581421,
+          0.6499999761581421,
+          0.800000011920929,
+          -0.699999988079071
+        ],
+        "valid": true
+      },
+      "reconstructed": false,
+      "restoredFullRateDraw": true
+    },
+    {
+      "case": 4,
+      "plan": {
+        "activeFov": [
+          -0.7228431701660156,
+          0.4890301823616028,
+          0.6890324950218201,
+          -0.59294593334198
+        ],
+        "center": [
+          0.6237287521362305,
+          0.5500420928001404
+        ],
+        "centerRadii": [
+          0.2199999988079071,
+          0.2199999988079071
+        ],
+        "cropIsRenderedZone": false,
+        "effectiveScale": [
+          1.0,
+          1.0
+        ],
+        "middleQuality": 65,
+        "middleRadii": [
+          0.37627124786376953,
+          0.4000000059604645
+        ],
+        "mode": "ThreeRenderedZones",
+        "outerQuality": 15,
+        "renderedRect": [
+          0.0,
+          0.0,
+          1.0,
+          1.0
+        ],
+        "renderedZones": 3,
+        "runtimeBaselineFov": [
+          -0.7228431701660156,
+          0.4890301823616028,
+          0.6890324950218201,
+          -0.59294593334198
+        ],
+        "valid": true
+      },
+      "reconstructed": false,
+      "restoredFullRateDraw": true
+    }
+  ],
+  "fixture": "developer-owned OpenXR runtime and real D3D12 rasterized scenes"
+}

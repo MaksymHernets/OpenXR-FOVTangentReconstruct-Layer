@@ -232,15 +232,16 @@ XrResult XRAPI_CALL gipa(XrInstance, const char *name, PFN_xrVoidFunction *out) 
     MAP(DestroySession, destroySession)
     MAP(CreateReferenceSpace, createReferenceSpace)
     MAP(LocateSpace, locateSpace)
-    MAP(DestroySpace, destroySpace) MAP(BeginSession, beginSession) MAP(EndSession, endSession)
-        MAP(PollEvent, pollEvent) MAP(LocateViews, locate)
-            MAP(EnumerateViewConfigurationViews, enumerateViews) MAP(CreateSwapchain, createSwapchain)
-                MAP(DestroySwapchain, destroySwapchain) MAP(EnumerateSwapchainImages, enumerateImages)
-                    MAP(AcquireSwapchainImage, acquire) MAP(WaitSwapchainImage, wait)
-                        MAP(ReleaseSwapchainImage, release) MAP(EndFrame, end)
-                            MAP(GetInstanceProperties, extra)
+    MAP(DestroySpace, destroySpace)
+    MAP(BeginSession, beginSession)
+    MAP(EndSession, endSession)
+    MAP(PollEvent, pollEvent) MAP(LocateViews, locate) MAP(EnumerateViewConfigurationViews, enumerateViews)
+        MAP(CreateSwapchain, createSwapchain) MAP(DestroySwapchain, destroySwapchain)
+            MAP(EnumerateSwapchainImages, enumerateImages) MAP(AcquireSwapchainImage, acquire)
+                MAP(WaitSwapchainImage, wait) MAP(ReleaseSwapchainImage, release) MAP(EndFrame, end)
+                    MAP(GetInstanceProperties, extra)
 #undef MAP
-                                *out = nullptr;
+                        *out = nullptr;
     return XR_ERROR_FUNCTION_UNSUPPORTED;
 }
 XrResult XRAPI_CALL createInstance(const XrInstanceCreateInfo *, const XrApiLayerCreateInfo *info,
@@ -270,6 +271,7 @@ int wmain(int argc, wchar_t **argv) {
         SetEnvironmentVariableW(L"FOV_DATA_DIR", dir.c_str());
         updateJson(dir / L"config.json", [](Json &j) {
             Profile profile;
+            profile.ffr.enabled = true; // Unsupported hardware/integration must preserve reconstruction.
             if (runtime::temporal)
                 profile.method = 5;
             j = {{"defaults", profileJson(profile)}};
@@ -476,6 +478,15 @@ int wmain(int argc, wchar_t **argv) {
         }
         require(diagnostics.value("graphicsApi", "") == (runtime::d3d12 ? "D3D12" : "D3D11"),
                 "Diagnostic graphics binding");
+        auto ffrStatus = diagnostics.at("ffr");
+        require(!ffrStatus.value("hardwareApplicationConfirmed", true) && ffrStatus["eyes"].size() == 2,
+                "FFR configured maps never imply hardware application");
+        require(ffrStatus["eyes"][0]["mode"] == "TwoRenderedZonesWithCrop" &&
+                    !ffrStatus["eyes"][0]["cropIsRenderedZone"].get<bool>(),
+                "FFR mode follows actual layer projection");
+        if (!runtime::d3d12)
+            require(!ffrStatus["capabilities"]["sceneIntegrationSupported"].get<bool>(),
+                    "D3D11 FFR unsupported explicitly");
         auto path = executablePath();
         auto history = loadJson(dir / L"history.json");
         require(history.contains(path) &&

@@ -1,5 +1,6 @@
 #include "common/Platform.h"
 #include "MainWindow.h"
+#include "FFRPanel.h"
 #include "Localization.h"
 #include "common/RegistryManager.h"
 #include <QTabWidget>
@@ -160,6 +161,8 @@ MainWindow::MainWindow() {
     f->addRow(profileEnabled);
     horizontal = number(.5, 1, .01);
     vertical = number(.5, 1, .01);
+    horizontal->setObjectName("horizontalFov");
+    vertical->setObjectName("verticalFov");
     horizontalSlider = new QSlider(Qt::Horizontal);
     verticalSlider = new QSlider(Qt::Horizontal);
     horizontalSlider->setRange(50, 100);
@@ -376,6 +379,22 @@ MainWindow::MainWindow() {
     settings->addRow(apply);
     settings->addRow(settingsStatus);
     tabs->addTab(settingsPage, "Settings");
+    ffrPanel = new FFRPanel;
+    auto ffrScroll = new QScrollArea;
+    ffrScroll->setWidgetResizable(true);
+    ffrScroll->setWidget(ffrPanel);
+    tabs->addTab(ffrScroll, "FFR");
+    auto updateFFR = [this] {
+        ffrPanel->setRequested(float(horizontal->value()), float(vertical->value()),
+                               profileEnabled->isChecked() && edgeEnabled->isChecked(),
+                               method->currentText());
+    };
+    connect(horizontal, qOverload<double>(&QDoubleSpinBox::valueChanged), this, updateFFR);
+    connect(vertical, qOverload<double>(&QDoubleSpinBox::valueChanged), this, updateFFR);
+    connect(profileEnabled, &QCheckBox::toggled, this, updateFFR);
+    connect(edgeEnabled, &QCheckBox::toggled, this, updateFFR);
+    connect(method, qOverload<int>(&QComboBox::currentIndexChanged), this, updateFFR);
+    connect(method, &QComboBox::currentTextChanged, this, updateFFR);
     connect(apply, &QPushButton::clicked, this, [this, languageChoice, localeChoice, settingsStatus]() {
         const auto language = languageChoice->currentData().toString();
         const auto locale = localeChoice->currentData().toString();
@@ -430,6 +449,8 @@ void MainWindow::loadEditor() {
                 p = fov::parseProfile(value, p);
                 break;
             }
+    ffrPanel->setObserved(fov::Json::object());
+    ffrPanel->setSettings(p.ffr);
     profileEnabled->setChecked(p.enabled);
     editorVulkanEnabled = p.vulkanEnabled;
     editorVulkanProcessing = p.vulkanProcessing;
@@ -468,6 +489,7 @@ void MainWindow::loadEditor() {
 }
 void MainWindow::saveEditor() {
     fov::Profile p;
+    p.ffr = ffrPanel->settings();
     p.vulkanEnabled = editorVulkanEnabled;
     p.vulkanProcessing = editorVulkanProcessing;
     p.enabled = profileEnabled->isChecked();
@@ -550,6 +572,15 @@ void MainWindow::refresh() {
                      .arg(text(j.value("settings", fov::Json::object()).value("edgeFillMethod", "Unknown")),
                           text(j.value("lastError", "")));
     }
+    fov::Json ffr = fov::Json::object();
+    for (auto it = live.begin(); it != live.end(); ++it) {
+        if ((!selectedPath.isEmpty() && text(it.value().value("executable", "")) == selectedPath) ||
+            (selectedPath.isEmpty() && live.size() == 1)) {
+            ffr = it.value().value("ffr", fov::Json::object());
+            ffr["scene"] = it.value().value("ffrScene", fov::Json::array());
+        }
+    }
+    ffrPanel->setObserved(ffr);
     liveLabel->setText(lines.empty() ? translate("No VR application connected") : lines.join("\n\n"));
     fov::Json all = fov::Json::object();
     for (auto it = live.begin(); it != live.end(); ++it)

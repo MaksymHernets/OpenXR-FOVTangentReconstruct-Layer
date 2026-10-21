@@ -216,10 +216,11 @@ XrResult XRAPI_CALL gipa(XrInstance, const char *name, PFN_xrVoidFunction *out) 
     MAP(EnumerateViewConfigurationViews, enumerateViews)
     MAP(LocateViews, locate)
     MAP(CreateSwapchain, createSwapchain)
-    MAP(DestroySwapchain, destroySwapchain) MAP(EnumerateSwapchainImages, enumerateImages)
-        MAP(AcquireSwapchainImage, acquire) MAP(WaitSwapchainImage, wait) MAP(ReleaseSwapchainImage, release)
-            MAP(EndFrame, end) MAP(BeginSession, beginSession) MAP(EndSession, endSession)
-                MAP(PollEvent, pollEvent) MAP(CreateReferenceSpace, createSpace) MAP(LocateSpace, locateSpace)
+    MAP(DestroySwapchain, destroySwapchain)
+    MAP(EnumerateSwapchainImages, enumerateImages) MAP(AcquireSwapchainImage, acquire)
+        MAP(WaitSwapchainImage, wait) MAP(ReleaseSwapchainImage, release) MAP(EndFrame, end)
+            MAP(BeginSession, beginSession) MAP(EndSession, endSession) MAP(PollEvent, pollEvent)
+                MAP(CreateReferenceSpace, createSpace) MAP(LocateSpace, locateSpace)
                     MAP(DestroySpace, destroySpace)
 #undef MAP
                         *out = nullptr;
@@ -252,6 +253,7 @@ int wmain(int argc, wchar_t **argv) {
         auto dir = std::filesystem::current_path() / ("test-data-vulkan-" + runtime::evidenceName);
         SetEnvironmentVariableW(L"FOV_DATA_DIR", dir.c_str());
         Profile profile;
+        profile.ffr.enabled = true; // Vulkan reconstruction cooperation does not enable scene FFR.
         profile.method = runtime::temporal ? 5 : 4;
         updateJson(dir / "config.json", [&](Json &j) { j = {{"defaults", profileJson(profile)}}; });
         runtime::device = std::make_unique<vkTest::Device>();

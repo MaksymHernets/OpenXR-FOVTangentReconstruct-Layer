@@ -1,0 +1,55 @@
+-- Configuring done (0.3s)
+-- Generating done (0.1s)
+-- Build files have been written to: <workspace>/build-015
+[1/9] Building CXX object CMakeFiles\fov_renderers.dir\renderer\D3D12FFR.cpp.obj
+[2/9] Linking CXX static library fov_renderers.lib
+[3/9] Linking CXX executable temporal_tests.exe
+[4/9] Linking CXX executable fov_tests.exe
+[5/9] Linking CXX executable ffr_hardware_tests.exe
+[6/9] Linking CXX executable vulkan_tests.exe
+[7/9] Linking CXX executable vulkan_layer_tests.exe
+[8/9] Building CXX object CMakeFiles\OpenXRFovExtension.dir\layer\OpenXRLayer.cpp.obj
+[9/9] Linking CXX shared library bin\OpenXRFovExtension.dll
+Test project <workspace>/build-015
+      Start  1: ffr_projection_and_config
+ 1/19 Test  #1: ffr_projection_and_config ........   Passed    0.01 sec
+      Start  2: ffr_d3d12_hardware
+ 2/19 Test  #2: ffr_d3d12_hardware ...............   Passed    9.88 sec
+      Start  3: core_and_gpu
+ 3/19 Test  #3: core_and_gpu .....................   Passed    4.37 sec
+      Start  4: layer_dispatch
+ 4/19 Test  #4: layer_dispatch ...................   Passed    2.36 sec
+      Start  5: layer_dispatch_d3d12
+ 5/19 Test  #5: layer_dispatch_d3d12 .............   Passed    2.32 sec
+      Start  6: layer_temporal_d3d11
+ 6/19 Test  #6: layer_temporal_d3d11 .............   Passed    2.30 sec
+      Start  7: layer_temporal_d3d12
+ 7/19 Test  #7: layer_temporal_d3d12 .............   Passed    2.11 sec
+      Start  8: temporal_d3d11
+ 8/19 Test  #8: temporal_d3d11 ...................   Passed    0.72 sec
+      Start  9: temporal_d3d12
+ 9/19 Test  #9: temporal_d3d12 ...................   Passed    0.81 sec
+      Start 10: vulkan_gpu
+10/19 Test #10: vulkan_gpu .......................   Passed    2.57 sec
+      Start 11: vulkan_layer_array
+11/19 Test #11: vulkan_layer_array ...............   Passed    3.58 sec
+      Start 12: vulkan_layer_enable2
+12/19 Test #12: vulkan_layer_enable2 .............   Passed    3.59 sec
+      Start 13: vulkan_layer_separate
+13/19 Test #13: vulkan_layer_separate ............   Passed    3.81 sec
+      Start 14: vulkan_layer_packed
+14/19 Test #14: vulkan_layer_packed ..............   Passed    3.61 sec
+      Start 15: vulkan_layer_depth
+15/19 Test #15: vulkan_layer_depth ...............   Passed    3.95 sec
+      Start 16: vulkan_layer_depth_packed
+16/19 Test #16: vulkan_layer_depth_packed ........   Passed    3.59 sec
+      Start 17: vulkan_layer_depth_separate
+17/19 Test #17: vulkan_layer_depth_separate ......   Passed    4.41 sec
+      Start 18: vulkan_layer_mixed_extensions
+18/19 Test #18: vulkan_layer_mixed_extensions ....   Passed    3.55 sec
+      Start 19: gui_localization
+19/19 Test #19: gui_localization .................   Passed    0.16 sec
+
+100% tests passed out of 19
+
+Total Test time (real) =  57.85 sec

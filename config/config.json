@@ -43,6 +43,22 @@
     "vulkan": {
       "enabled": true,
       "processing": "auto"
+    },
+    "ffr": {
+      "enabled": false,
+      "centerRadiusX": 0.22,
+      "centerRadiusY": 0.22,
+      "middleRadiusX": 0.4,
+      "middleRadiusY": 0.4,
+      "offsetX": 0,
+      "offsetY": 0,
+      "transition": 0.03,
+      "fullMiddleQuality": 65,
+      "reducedMiddleQuality": 65,
+      "outerQuality": 15,
+      "geometry": "ellipse",
+      "policy": "balanced",
+      "debug": false
     }
   },
   "games": {},

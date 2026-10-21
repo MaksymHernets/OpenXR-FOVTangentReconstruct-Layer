@@ -9,8 +9,8 @@
 #include <cstdlib>
 namespace vkTest {
 inline bool validationRequired() {
-    const auto value = std::getenv("FOV_REQUIRE_VULKAN_VALIDATION");
-    return value && !std::strcmp(value, "1");
+    char value[4]{};
+    return GetEnvironmentVariableA("FOV_REQUIRE_VULKAN_VALIDATION", value, 4) == 1 && value[0] == '1';
 }
 class Unavailable : public std::runtime_error {
   public:

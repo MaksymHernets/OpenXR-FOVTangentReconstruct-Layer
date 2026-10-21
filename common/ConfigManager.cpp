@@ -127,6 +127,28 @@ Profile parseProfile(const Json &j, Profile p) {
         return p;
     p.enabled = flag(j, "enabled", p.enabled);
     p.edgeEnabled = flag(j, "edgeEnabled", p.edgeEnabled);
+    if (auto f = j.find("ffr"); f != j.end() && f->is_object()) {
+        auto &s = p.ffr;
+        s.enabled = flag(*f, "enabled", s.enabled);
+        s.debug = flag(*f, "debug", s.debug);
+        s.centerX = number(*f, "centerRadiusX", s.centerX, .02f, .49f);
+        s.centerY = number(*f, "centerRadiusY", s.centerY, .02f, .49f);
+        s.middleX = std::max(s.centerX, number(*f, "middleRadiusX", s.middleX, .02f, .5f));
+        s.middleY = std::max(s.centerY, number(*f, "middleRadiusY", s.middleY, .02f, .5f));
+        s.offsetX = number(*f, "offsetX", s.offsetX, -.4f, .4f);
+        s.offsetY = number(*f, "offsetY", s.offsetY, -.4f, .4f);
+        s.transition = number(*f, "transition", s.transition, 0, .15f);
+        s.fullMiddleQuality = int(number(*f, "fullMiddleQuality", float(s.fullMiddleQuality), 50, 75));
+        s.reducedMiddleQuality =
+            int(number(*f, "reducedMiddleQuality", float(s.reducedMiddleQuality), 50, 75));
+        s.outerQuality = int(number(*f, "outerQuality", float(s.outerQuality), 10, 20));
+        if (auto v = f->find("geometry");
+            v != f->end() && v->is_string() && (*v == "ellipse" || *v == "rectangle"))
+            s.geometry = *v;
+        if (auto v = f->find("policy"); v != f->end() && v->is_string() &&
+                                        (*v == "conservative" || *v == "balanced" || *v == "aggressive"))
+            s.policy = *v;
+    }
     if (auto v = j.find("vulkan"); v != j.end() && v->is_object()) {
         p.vulkanEnabled = flag(*v, "enabled", p.vulkanEnabled);
         if (v->contains("processing") && (*v)["processing"].is_string()) {
@@ -188,6 +210,21 @@ Profile parseProfile(const Json &j, Profile p) {
 Json profileJson(const Profile &p) {
     const char *names[] = {"clamp", "gradient", "blur", "mirror", "solid", "temporalDepth"};
     return {{"enabled", p.enabled},
+            {"ffr",
+             {{"enabled", p.ffr.enabled},
+              {"debug", p.ffr.debug},
+              {"centerRadiusX", p.ffr.centerX},
+              {"centerRadiusY", p.ffr.centerY},
+              {"middleRadiusX", p.ffr.middleX},
+              {"middleRadiusY", p.ffr.middleY},
+              {"offsetX", p.ffr.offsetX},
+              {"offsetY", p.ffr.offsetY},
+              {"transition", p.ffr.transition},
+              {"fullMiddleQuality", p.ffr.fullMiddleQuality},
+              {"reducedMiddleQuality", p.ffr.reducedMiddleQuality},
+              {"outerQuality", p.ffr.outerQuality},
+              {"geometry", p.ffr.geometry},
+              {"policy", p.ffr.policy}}},
             {"vulkan", {{"enabled", p.vulkanEnabled}, {"processing", p.vulkanProcessing}}},
             {"edgeEnabled", p.edgeEnabled},
             {"horizontalFovMultiplier", p.horizontal},

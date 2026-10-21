@@ -1,6 +1,6 @@
 # OpenXR FOV Extension
 
-Version **0.1.4**. Windows x64 implicit OpenXR API layer and Qt 6 **OpenXR FOV Manager**. The layer narrows each eye's projection in tangent space, recommends smaller render dimensions, and reconstructs the original projection using a separate runtime-owned output swapchain. Clamp, Gradient, Blur, Mirror, Solid Color, and **Temporal Depth Reconstruction** are implemented as GPU shaders for D3D11 and D3D12, with an experimental cooperative Vulkan 1.1+ compute backend.
+Version **0.1.5**. Windows x64 implicit OpenXR API layer and Qt 6 **OpenXR FOV Manager**. The layer narrows each eye's projection in tangent space, recommends smaller render dimensions, and reconstructs the original projection using a separate runtime-owned output swapchain. Clamp, Gradient, Blur, Mirror, Solid Color, and **Temporal Depth Reconstruction** are implemented as GPU shaders for D3D11 and D3D12, with an experimental cooperative Vulkan 1.1+ compute backend.
 
 This is an initial implementation with local GPU and dispatch tests. **Quest 3 visual validation, VDXR session testing, performance measurements, and long-running game compatibility testing remain required.** See [testing](docs/TESTING.md) and [design and limitations](docs/DESIGN.md). Do not interpret a successful build as headset certification.
 
@@ -36,6 +36,14 @@ Set `FOV_BUILD_GUI=OFF` to build only the layer/control utility, `FOV_BUILD_TEST
 No registry writes are performed by building, testing, packaging, or simply opening the manager. UAC applies only when the user chooses a registration operation. Do not register multiple copies of the same layer. To bypass a registered layer temporarily, define `XR_FOV_DISABLE=1` before launching the game.
 
 Edge Fill shows only settings used by the selected algorithm: Gradient exposes stretch width, gradient strength, and samples; Blur exposes stretch width, radius, and strength; Solid Color exposes the fill color; Temporal Depth Reconstruction exposes its reconstruction block. Clamp and Mirror have no additional parameters. The enable switch and algorithm selector remain available. Switching algorithms preserves parameter values.
+
+## Adaptive FFR in 0.1.5
+
+The independent **FFR** tab configures projection-aware quality zones. Full effective FOV uses three rendered zones; additional application FOV reduction uses two rendered zones and the existing Reconstruction Manager for the crop. Center quality stays full, while middle/outer quality targets have independent persistent settings. The preview identifies rendered zones and reconstruction separately and labels unavailable live FOV evidence.
+
+Actual scene workload reduction is implemented for **cooperating D3D12 Tier 2 VRS applications**. Ordinary third-party games have no automatic scene-recording integration. D3D11 and Vulkan FFR are currently unsupported; their existing reconstruction remains available. FFR is disabled by default and never silently substitutes blur. Quality targets are discrete rate policies, not guaranteed quality percentages or savings.
+
+See the [design](docs/FFR_DESIGN.md), [developer contract](docs/FFR_INTEGRATION.md), [tests and Hubris acceptance](docs/FFR_TESTING.md), and [measured benchmark](docs/FFR_BENCHMARK_RESULTS.md). GPU workload reduction is verified in a controlled rasterized fixture; Hubris and headset/runtime performance are not verified.
 
 ## Vulkan support in 0.1.4
 

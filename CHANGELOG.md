@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.5
+
+- Added independent adaptive FFR settings and per-eye zone previews in all eleven languages, with persistent full/reduced-FOV quality settings.
+- Selects three rendered zones at full effective FOV and two rendered zones plus existing reconstruction for additional crop, using runtime/returned FOV provenance and preserving streamer baselines.
+- Added explicit D3D12 Tier 2 scene-recording VRS integration, capability/rate mapping, fence-protected map reuse and full-rate state restoration.
+- Added real rasterized GPU workload/timing measurements, projection/UI/layer regressions, colored peripheral captures and compatibility documentation.
+- Third-party scene integration and D3D11/Vulkan FFR remain unsupported. Existing D3D11/D3D12/Vulkan reconstruction is retained. Hubris/headset acceptance remains unverified.
+
 ## 0.1.4
 
 - Added Vulkan/enable2 session detection, native image tracking, and explicit diagnostic passthrough for unverified applications.

@@ -1,0 +1,15 @@
+{
+  "vulkanSynchronizationValidationRequired": true,
+  "vulkanGpuValidationEnabled": true,
+  "vulkanLayerCases": {
+    "openxr-array": true,
+    "openxr-depth-array": true,
+    "openxr-depth-packed": true,
+    "openxr-depth-separate": true,
+    "openxr-enable2": true,
+    "openxr-mixed": true,
+    "openxr-packed": true,
+    "openxr-separate": true
+  },
+  "d3d12DebugLayerEnabled": true
+}

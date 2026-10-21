@@ -3,6 +3,7 @@
 #include <QMap>
 #include <QColor>
 #include "common/ConfigManager.h"
+class FFRPanel;
 class QLabel;
 class QCheckBox;
 class QDoubleSpinBox;
@@ -18,6 +19,7 @@ class QGroupBox;
 class MainWindow : public QMainWindow {
     QString selectedPath;
     QMap<QString, fov::Json> live;
+    FFRPanel *ffrPanel;
     QLabel *registrationLabel, *runtimeLabel, *liveLabel, *targetLabel, *saveLabel;
     QCheckBox *profileEnabled, *edgeEnabled, *linked;
     QCheckBox *logging, *gpuTiming, *fovBorders;

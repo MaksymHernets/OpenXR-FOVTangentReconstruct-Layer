@@ -1,0 +1,11 @@
+# Adaptive FFR audit — 0.1.5
+
+The 0.1.4 tree has no FFR implementation or scene-rendering interception. `FovMath.h` reduces runtime tangents; `hookLocateViews` records runtime and returned projections; `hookEndFrame` reconstructs from private snapshots into a separate output swapchain. Six existing algorithms are clamp, gradient, blur, mirror, solid and temporalDepth. There is no AI reconstruction. FFR must not extend this algorithm enumeration or change its selection.
+
+Profiles and eleven-language Qt settings can host independent FFR controls. The authoritative runtime baseline is the FOV returned by downstream locate, including any streamer reduction. Application crop is only the additional difference between that baseline and the projection returned to the application. Existing native passthrough when reconstruction is disabled must remain authoritative.
+
+The layer sees submitted images after scene rendering. It cannot retroactively reduce their shading workload. D3D12 therefore needs an explicit developer scene-recording contract, Tier 2 capability checks, per-eye R8_UINT shading-rate maps, and fence-protected lifetimes. It must unbind VRS before reconstruction. No global COM/vtable replacement is justified. D3D11 NVAPI requires vendor context/draw integration absent here. Vulkan reconstruction cooperation does not prove enabled fragment-shading-rate features or attachment/render-pass integration; Vulkan FFR remains unsupported until those are available.
+
+Implement shared projection-aware zone planning, persistent settings, preview/diagnostics, and a cooperative D3D12 VRS backend. Verify actual rasterized draw workload using pipeline statistics and GPU timestamps on supported hardware. Ordinary third-party processes retain unsupported FFR status. Hubris/headset regression and production-runtime performance require external execution evidence; synthetic tests cannot establish them.
+
+Sources: [Microsoft VRS](https://learn.microsoft.com/en-us/windows/win32/direct3d12/vrs), [shading-rate image requirements](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist5-rssetshadingrateimage), [Khronos fragment shading rate](https://docs.vulkan.org/features/latest/features/proposals/VK_KHR_fragment_shading_rate.html), [NVIDIA NVAPI](https://docs.nvidia.com/nvapi/group__dx.html).

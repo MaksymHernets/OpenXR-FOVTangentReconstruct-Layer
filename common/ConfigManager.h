@@ -6,6 +6,14 @@
 #include <array>
 namespace fov {
 using Json = nlohmann::json;
+struct FFRSettings {
+    bool enabled = false, debug = false;
+    float centerX = .22f, centerY = .22f, middleX = .4f, middleY = .4f;
+    float offsetX = 0, offsetY = 0, transition = .03f;
+    int fullMiddleQuality = 65, reducedMiddleQuality = 65, outerQuality = 15;
+    std::string geometry = "ellipse", policy = "balanced";
+    bool operator==(const FFRSettings &) const = default;
+};
 struct TemporalSettings {
     bool enabled = true, useDepth = true, showConfidenceMask = false, showReprojectionCoverage = false,
          showDepth = false;
@@ -17,6 +25,7 @@ struct TemporalSettings {
     bool operator==(const TemporalSettings &) const = default;
 };
 struct Profile {
+    FFRSettings ffr;
     bool vulkanEnabled = true;
     std::string vulkanProcessing = "auto";
     bool enabled = true, edgeEnabled = true;

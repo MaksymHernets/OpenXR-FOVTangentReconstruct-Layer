@@ -44,3 +44,7 @@ The local pipe rejects remote clients and uses the user's default Windows securi
 ## Vulkan 0.1.4
 
 Vulkan uses the same layer, FOV/projection mapping, temporal metadata, profiles and IPC through native renderer entry points. It requires explicit developer cooperation for image layout and producer completion. Other Vulkan applications keep native FOV and diagnostic passthrough; there is no implicit Vulkan dispatch layer. See [the backend design](VULKAN_BACKEND_DESIGN.md) and [synchronization proof](VULKAN_SYNCHRONIZATION.md). With ambiguous Vulkan plus Direct3D extension lists, early size recommendations stay native until a compatible session is known.
+
+## Adaptive FFR
+
+The independent 0.1.5 [FFR module](FFR_DESIGN.md) plans two/three rendered zones from authoritative runtime/returned tangent spans. It preserves the existing reconstruction mapping and never adds its own crop. Explicit developer scene recording is required for D3D12 Tier 2 VRS; D3D11/Vulkan scene FFR and automatic third-party integration remain unsupported.

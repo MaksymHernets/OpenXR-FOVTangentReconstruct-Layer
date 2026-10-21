@@ -66,3 +66,9 @@ Record actual results before treating hardware acceptance criteria as met.
 All seventeen CTest tests passed, including nine actual Vulkan GPU/OpenXR fixture cases on an NVIDIA RTX 4060 with Khronos synchronization validation required and zero validation errors. Existing D3D11/D3D12 and GUI regressions passed. The manager's native Windows smoke test rendered all six tabs, and executable metadata reports 0.1.4. Vulkan is loaded dynamically; the layer has no mandatory Vulkan DLL import.
 
 The [Vulkan implementation report](VULKAN_IMPLEMENTATION_REPORT.md), [compatibility matrix](VULKAN_COMPATIBILITY_MATRIX.md) and [benchmark results](VULKAN_BENCHMARK_RESULTS.md) separate controlled execution from untested game/headset/runtime behavior. Ordinary third-party Vulkan applications remain diagnostic passthrough.
+
+## Local 0.1.5 results
+
+Nineteen tests passed, including real D3D12 Tier 2 scene VRS, pipeline-statistics workload reduction, center/edge readback checks, state restoration, projection/streamer-baseline tests, the existing D3D11/D3D12 reconstruction suites, and nine Vulkan cases with required Khronos synchronization validation. D3D12 debug validation was enabled. Native Windows UI smoke tests covered all seven tabs, full/reduced FFR previews and Arabic layout; executable metadata reports 0.1.5.
+
+See [FFR verification](FFR_TESTING.md) and [measurements](FFR_BENCHMARK_RESULTS.md). Hubris/headset/runtime frame-deadline acceptance remains unverified; synthetic captures are not game evidence.
