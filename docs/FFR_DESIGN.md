@@ -1,4 +1,4 @@
-# FFR and Outside design — 0.1.8
+# FFR and Outside design — 0.1.9
 
 ## Projection authority
 
@@ -35,3 +35,11 @@ Queue submission hooks record executed draw evidence with dedicated queue fences
 FFR keeps separate full/reduced Middle qualities, configured radii, offsets, geometry, policy and reconstruction selection. Outside reconstruction remains visible in both modes. Debug view indices are 0 final composite, 1 Center, 2 Middle, 3 Outside mask, 4 actual crop, 5 original input, 6 reconstructed Outside on black, 7 diagnostic Outside color fill. Color fill uses the existing persistent Edge Fill color. `outsideFallback` is 0 adaptive blur, 1 configured solid color. Normal Solid Color's default black remains intentional.
 
 IPC separates effective per-eye geometry, backend support, supported rates, recorded rates, fence-observed draw execution, selected method, fallback policy and Outside suppression (false, 0% savings). A preview never establishes actual hardware activation.
+
+## Automatic D3D11 NVAPI integration — 0.1.9
+
+The session device's immediate context is intercepted using the existing pinned MinHook dependency. Render-target binding (including OM UAV binding), viewports, direct/indexed/instanced/indirect/DrawAuto calls, ClearState and deferred command-list execution are observed. Only matching proportional projection-sized texture targets, one full viewport and up to two RTV array slices are eligible. Non-MSAA and 2x/4x/8x MSAA layouts are supported; both slices share the conservative center-preserving map. Packed targets use eye halves; unknown mono-eye identity conservatively keeps both eye centers at full rate. No game/runtime files are modified.
+
+NVAPI viewport-rate and map entry points are also observed. Foreign rates/images cause refusal; an already loaded OpenXR Toolkit blocks automatic installation because no general preinstallation NVAPI state getter is available. The normal fresh-context baseline is disabled rates and no map. Each eligible draw binds a cached immutable map/table and restores that baseline immediately afterward. Both texture and view stay alive across concurrent profile changes. The layer's reconstruction is excluded using thread-local suppression. Explicit cooperating scopes still work and are observed as foreign ownership during their draws.
+
+D3D11 GPU event queries are emitted in bounded batches and polled with DONOTFLUSH on the application's immediate-context draw thread. Diagnostics never issue context calls from the IPC worker. No GPU wait or forced Flush is introduced. Completed markers confirm NVAPI-wrapped draws executed; they do not measure game FPS or shading-frequency savings. A deferred command-list execution suspends the automatic path because extension state cannot be established safely. Deferred recording, arrays beyond two slices, unsupported sample counts and ambiguous/partial viewports remain unsupported. Outside original scene suppression remains unavailable.

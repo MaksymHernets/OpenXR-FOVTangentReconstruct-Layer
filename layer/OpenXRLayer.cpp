@@ -7,6 +7,7 @@
 #include "renderer/D3D12FFR.h"
 #include "renderer/D3D12SceneInterceptor.h"
 #include "renderer/D3D11FFR.h"
+#include "renderer/D3D11SceneInterceptor.h"
 #include "renderer/VulkanContext.h"
 #include <deque>
 #include <map>
@@ -67,7 +68,7 @@ struct Session {
     };
     std::deque<FFRLocated> ffrLocated;
     std::unique_ptr<D3D12FFR> ffr;
-    std::unique_ptr<D3D12SceneInterceptor> automaticFFR;
+    std::unique_ptr<ISceneInterceptor> automaticFFR;
     std::string automaticFFRError;
     std::unique_ptr<D3D11FFR> ffr11;
     Json ffrDraws = Json::array();
@@ -410,6 +411,12 @@ XRAPI_ATTR XrResult XRAPI_CALL hookCreateSession(XrInstance handle, const XrSess
                     s->api = "D3D11";
                     s->renderer = makeD3D11(b->device);
                     s->ffr11 = std::make_unique<D3D11FFR>(b->device);
+                    if (s->ffr11->capabilities().value("hardwareSupported", false))
+                        try {
+                            s->automaticFFR = std::make_unique<D3D11SceneInterceptor>(b->device);
+                        } catch (const std::exception &e) {
+                            s->automaticFFRError = e.what();
+                        }
                     break;
                 }
                 if (p->type == XR_TYPE_GRAPHICS_BINDING_D3D12_KHR) {
@@ -511,7 +518,8 @@ static void reportFFR(Session &s, const XrViewLocateInfo &info, XrView *views,
                                         ? "Fragment shading-rate feature/render-pass integration unavailable"
                                         : "Vendor scene-rendering integration unavailable"}};
     if (s.automaticFFR) {
-        capability["backend"] = "Automatic D3D12 Tier 2 VRS";
+        capability["backend"] = s.api == "D3D11" ? "Automatic D3D11 NVIDIA NVAPI VRS"
+                                                     : "Automatic D3D12 Tier 2 VRS";
         capability["integrationRequired"] = false;
         capability["reason"] = "Automatic scene interception installed";
     }
@@ -787,6 +795,7 @@ XRAPI_ATTR XrResult XRAPI_CALL hookEndFrame(XrSession handle, const XrFrameEndIn
     if ((s->ffr && s->ffr->active()) || (s->ffr11 && s->ffr11->active()))
         return XR_ERROR_CALL_ORDER_INVALID;
     D3D12SceneInterceptor::Suppress suppressSceneHooks;
+    D3D11SceneInterceptor::Suppress suppressD3D11SceneHooks;
     if (s->automaticFFR && info && info->layers) {
         for (uint32_t i = 0; i < info->layerCount; ++i)
             if (info->layers[i] && info->layers[i]->type == XR_TYPE_COMPOSITION_LAYER_PROJECTION) {

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.9
+
+- Added automatic D3D11 NVIDIA NVAPI scene FFR without requiring application cooperation calls.
+- Intercepted immediate-context direct, indexed, instanced, automatic and indirect draws; filtered projection-sized render targets and viewports, including single-eye/stereo array views, packed stereo and 2x/4x/8x MSAA.
+- Cached immutable maps, retained resources across live profile changes, preserved the conservative full-quality Center, and restored NVAPI state immediately after each eligible draw.
+- Added GPU event completion counters, foreign-state refusal and conservative deferred-command-list exclusion; suppressed the layer's own reconstruction draws.
+- Verified real shader-invocation reduction, central pixel equality in both eye slices at 1x/2x/4x/8x MSAA, instanced/indirect paths, overlay exclusion, array views, restoration and deferred exclusion on NVIDIA hardware.
+- Confirmed GPU-completed automatic draws in Rumble through VDXR; the user accepted both-eye visuals with its 8x MSAA stereo targets.
+
 ## 0.1.8
 
 - Fixed the RE3 VR mod integration gap: added automatic D3D12 Tier 2 scene interception rather than requiring application calls to the cooperation API.

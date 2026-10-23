@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
                                  {"drawsExecuted", 5},
                                  {"reason", "Queue completion observed"}}}});
             auto support = panel.findChild<QLabel *>("ffrSupport")->text();
-            require(support.contains("Automatic D3D12 scene interception installed") &&
+            require(support.contains("Automatic scene interception installed") &&
                         support.contains("12 recorded draws; 5 GPU-executed draws"),
                     "UI distinguishes automatic execution evidence from hardware capability");
         }

@@ -1,0 +1,7 @@
+Test project D:/MyProjects/Codex/OpenXR_FOVFill_layer/build-019
+    Start 4: ffr_d3d11_nvapi_hardware
+1/1 Test #4: ffr_d3d11_nvapi_hardware .........   Passed    9.35 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   9.38 sec

@@ -1,8 +1,8 @@
 # OpenXR FOV Tangent Reconstruct Layer
 
-Version **0.1.8**. Windows x64 implicit OpenXR API layer and Qt 6 **OpenXR FOV Manager**. The layer narrows each eye's projection in tangent space, recommends smaller render dimensions, and reconstructs the original projection using a separate runtime-owned output swapchain. Clamp, Gradient, Blur, Mirror, Solid Color, and **Temporal Depth Reconstruction** are implemented as GPU shaders for D3D11 and D3D12, with an experimental cooperative Vulkan 1.1+ compute backend.
+Version **0.1.9**. Windows x64 implicit OpenXR API layer and Qt 6 **OpenXR FOV Manager**. The layer narrows each eye's projection in tangent space, recommends smaller render dimensions, and reconstructs the original projection using a separate runtime-owned output swapchain. Clamp, Gradient, Blur, Mirror, Solid Color, and **Temporal Depth Reconstruction** are implemented as GPU shaders for D3D11 and D3D12, with an experimental cooperative Vulkan 1.1+ compute backend.
 
-This is an initial implementation with local GPU and dispatch tests. **The RE3 VR mod was checked live through VDXR on D3D12: automatic FFR draws completed and the user confirmed both eyes look correct at 80% FOV with Blur. Broader visual coverage, game performance measurements, and long-running compatibility testing remain required.** See [testing](docs/TESTING.md) and [design and limitations](docs/DESIGN.md). Do not interpret a successful build as headset certification.
+This is an initial implementation with local GPU and dispatch tests. **The RE3 VR mod was checked live through VDXR on D3D12: automatic FFR draws completed and the user confirmed both eyes look correct at 80% FOV with Blur. Rumble also passed live D3D11/NVAPI execution and user stereo visual checks with 8x MSAA in 0.1.9. Broader visual coverage, game performance measurements, and long-running compatibility testing remain required.** See [testing](docs/TESTING.md) and [design and limitations](docs/DESIGN.md). Do not interpret a successful build as headset certification.
 
 ## Build
 
@@ -39,7 +39,7 @@ Building, packaging and simply opening the manager do not change OpenXR registra
 
 Edge Fill shows only settings used by the selected algorithm: Gradient exposes stretch width, gradient strength, and samples; Blur exposes stretch width, radius, and strength; Solid Color exposes the fill color; Temporal Depth Reconstruction exposes its reconstruction block. Clamp and Mirror have no additional parameters. The enable switch and algorithm selector remain available. Switching algorithms preserves parameter values.
 
-## Automatic FFR and persistent Outside reconstruction in 0.1.8
+## Automatic FFR and persistent Outside reconstruction in 0.1.9
 
 At **100% effective FOV**, the layer keeps the original projection and reconstructs Outside using the selected Edge Fill algorithm. The Outside boundary uses the configured Middle X/Y radii and elliptical or rectangular geometry. Center remains 1×1; supported VRS can reduce Middle shading. Outside is never assigned a coarse VRS rate.
 
@@ -49,7 +49,7 @@ The **FFR** tab exposes both modes, the Outside boundary, selected reconstructio
 
 **D3D12 Tier 2 FFR now intercepts ordinary scene draws automatically**, including eligible intermediate render targets. Applications no longer need to call the experimental cooperation API. The layer observes render-target descriptors, projection dimensions, command-list Reset, viewports, existing VRS state and queue submissions. It wraps eligible direct draws with a tiled map and restores state immediately. GPU-completed submission counters appear in the FFR tab. Native render passes, unknown indirect/bundle draws, ambiguous/mismatched targets and foreign VRS state are skipped.
 
-The 0.1.7 prototype's hardware tests exercised cooperating applications only; its scene integration gap prevented FFR in the RE3 VR mod even though Outside reconstruction ran. Version 0.1.8 addresses that gap for D3D12. D3D11 NVIDIA NVAPI still requires explicit scene cooperation. Vulkan scene FFR remains unsupported; its existing cooperative reconstruction remains available.
+The 0.1.7 prototype's hardware tests exercised cooperating applications only; its scene integration gap prevented FFR in the RE3 VR mod even though Outside reconstruction ran. Version 0.1.8 addresses that gap for D3D12. Version 0.1.9 adds automatic D3D11 NVIDIA NVAPI interception on the session device's immediate context. It handles eligible direct/instanced/indirect draws, restores disabled rates and a null map after each draw, and confirms completion with nonblocking GPU event queries. Observed foreign NVAPI state, deferred command lists, partial viewports, arrays beyond two slices and unsupported sample counts are excluded. Single-pass stereo arrays with 1x/2x/4x/8x MSAA share a conservative map that preserves both eye centers. A deferred command-list execution suspends automatic D3D11 processing because its NVAPI state is unknown. Vulkan scene FFR remains unsupported; its existing cooperative reconstruction remains available.
 
 Turn off another layer's FFR when testing this layer's automatic path. Existing application/Toolkit VRS is preserved and reported as a foreign-state skip rather than overridden. Outside original shading suppression remains **unsupported, with 0% scene savings**: replacing rendered pixels alone does not save that work. Full-FOV reconstruction can increase total GPU time even when Middle VRS reduces shader invocations.
 

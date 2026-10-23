@@ -3,6 +3,7 @@
 #undef wmain
 #include "layer/FFRCooperation.h"
 #include "renderer/D3D11FFR.h"
+#include "renderer/D3D11SceneInterceptor.h"
 #include <d3dcompiler.h>
 #include <d3d11sdklayers.h>
 #include <iostream>
@@ -79,6 +80,201 @@ int main(int argc, char **argv) {
             }
             check(result);
         };
+        // Ordinary scene draws: no begin/end cooperation calls on the automatic path.
+        {
+            D3D11SceneInterceptor automatic(device.Get());
+            automatic.target(512, 512, 1);
+            FFRSettings policy;
+            policy.enabled = true;
+            policy.centerX = policy.centerY = .15f;
+            std::array<FFRPlan, 2> plans;
+            for (int eye = 0; eye < 2; ++eye) {
+                XrFovf f{-.8f, .8f, .8f, -.8f};
+                plans[eye] = makeFFRPlan(f, reduce(f, .8f, .8f), policy);
+            }
+            Json evidence = Json::array();
+            UINT args[]{3, 1, 0, 0};
+            D3D11_BUFFER_DESC argsDesc{};
+            argsDesc.ByteWidth = sizeof(args);
+            argsDesc.Usage = D3D11_USAGE_DEFAULT;
+            argsDesc.MiscFlags = D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS;
+            D3D11_SUBRESOURCE_DATA argsData{args, 0, 0};
+            ComPtr<ID3D11Buffer> indirect;
+            check(device->CreateBuffer(&argsDesc, &argsData, &indirect));
+            auto measure = [&](bool enabled, bool partial, bool foreign, int drawKind = 0) {
+                automatic.update(plans, enabled);
+                double count = 0;
+                for (int frame = 0; frame < 24; ++frame) {
+                    context->OMSetRenderTargets(1, &raw, nullptr);
+                    D3D11_VIEWPORT v{0, 0, partial ? 64.f : 512.f, partial ? 64.f : 512.f, 0, 1};
+                    context->RSSetViewports(1, &v);
+                    // The existing cooperative backend simulates foreign NVAPI ownership.
+                    if (foreign)
+                        ffr.begin(context.Get(), plans[0], 512, 512, {{0, 0}, {512, 512}});
+                    context->Begin(stats.Get());
+                    if (drawKind == 1)
+                        context->DrawInstanced(3, 1, 0, 0);
+                    else if (drawKind == 2)
+                        context->DrawInstancedIndirect(indirect.Get(), 0);
+                    else
+                        context->Draw(3, 0);
+                    context->End(stats.Get());
+                    if (foreign)
+                        ffr.end(context.Get());
+                    context->Flush();
+                    D3D11_QUERY_DATA_PIPELINE_STATISTICS q{};
+                    ready(stats.Get(), &q, sizeof(q));
+                    if (frame >= 4)
+                        count += q.PSInvocations;
+                }
+                count /= 20;
+                evidence.push_back({{"enabled", enabled},
+                                    {"partialViewport", partial},
+                                    {"foreignVrs", foreign},
+                                    {"drawKind", drawKind},
+                                    {"meanPSInvocations", count},
+                                    {"diagnostics", automatic.diagnostics()}});
+                return count;
+            };
+            auto baseline = measure(false, false, false);
+            auto centerPixels = [&]() {
+                auto desc = td;
+                desc.Usage = D3D11_USAGE_STAGING;
+                desc.BindFlags = 0;
+                desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+                ComPtr<ID3D11Texture2D> readback;
+                check(device->CreateTexture2D(&desc, nullptr, &readback));
+                context->CopyResource(readback.Get(), target.Get());
+                D3D11_MAPPED_SUBRESOURCE mapped{};
+                check(context->Map(readback.Get(), 0, D3D11_MAP_READ, 0, &mapped));
+                std::vector<uint8_t> patch;
+                for (int y = 248; y < 264; ++y) {
+                    auto row = static_cast<uint8_t *>(mapped.pData) + y * mapped.RowPitch + 248 * 4;
+                    patch.insert(patch.end(), row, row + 16 * 4);
+                }
+                context->Unmap(readback.Get(), 0);
+                return patch;
+            };
+            auto baselineCenter = centerPixels();
+            auto reduced = measure(true, false, false);
+            require(centerPixels() == baselineCenter, "Automatic D3D11 preserves full-quality center pixels");
+            require(reduced < baseline * .9, "Automatic D3D11 reduces real shading work without cooperation");
+            require(measure(true, false, false, 1) < baseline * .9, "Automatic D3D11 instanced draws");
+            require(measure(true, false, false, 2) < baseline * .9, "Automatic D3D11 indirect draws");
+            require(measure(true, true, false) >= 4096, "Automatic D3D11 excludes partial overlays");
+            require(measure(false, false, false) >= 512 * 512, "Automatic D3D11 restores disabled baseline");
+            auto foreign = measure(true, false, true);
+            require(foreign < baseline * .9, "Foreign explicit VRS remains effective");
+            auto d = automatic.diagnostics();
+            require(d["drawsExecuted"].get<uint64_t>() > 0, "Automatic D3D11 GPU event completion observed");
+            require(d["foreignVrsSkipped"].get<uint64_t>() > 0,
+                    "Automatic D3D11 preserves foreign NVAPI state");
+            require(d["mapBuilds"] == 1, "Automatic D3D11 maps cached, not generated per draw");
+            auto arrayDesc = td;
+            arrayDesc.ArraySize = 2;
+            ComPtr<ID3D11Texture2D> arrayTexture;
+            check(device->CreateTexture2D(&arrayDesc, nullptr, &arrayTexture));
+            ComPtr<ID3D11RenderTargetView> arrayView;
+            check(device->CreateRenderTargetView(arrayTexture.Get(), nullptr, &arrayView));
+            raw = arrayView.Get();
+            require(measure(true, false, false) < baseline * .9,
+                    "Stereo array RTV uses shared conservative map");
+            D3D11_RENDER_TARGET_VIEW_DESC sliceDesc{};
+            sliceDesc.Format = td.Format;
+            sliceDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+            sliceDesc.Texture2DArray.ArraySize = 1;
+            ComPtr<ID3D11RenderTargetView> sliceView;
+            check(device->CreateRenderTargetView(arrayTexture.Get(), &sliceDesc, &sliceView));
+            raw = sliceView.Get();
+            require(measure(true, false, false) < baseline * .9,
+                    "Single-eye array slice supports automatic D3D11");
+            raw = rtv.Get();
+            // Unity single-pass stereo: a geometry shader targets each array slice.
+            const char *gsSource = R"(
+                cbuffer Eye:register(b0){uint eye;float3 padding;};
+                struct V{float4 pos:SV_Position;};
+                struct G{float4 pos:SV_Position;uint slice:SV_RenderTargetArrayIndex;};
+                [maxvertexcount(3)] void GS(triangle V input[3],inout TriangleStream<G> output){
+                    for(uint i=0;i<3;i++){G g;g.pos=input[i].pos;g.slice=eye;output.Append(g);}
+                })";
+            ComPtr<ID3DBlob> gsBytes;
+            check(D3DCompile(gsSource, strlen(gsSource), nullptr, nullptr, nullptr, "GS", "gs_5_0", 0, 0,
+                             &gsBytes, &errors));
+            ComPtr<ID3D11GeometryShader> geometry;
+            check(device->CreateGeometryShader(gsBytes->GetBufferPointer(), gsBytes->GetBufferSize(), nullptr,
+                                               &geometry));
+            D3D11_BUFFER_DESC cbDesc{};
+            cbDesc.ByteWidth = 16;
+            cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+            ComPtr<ID3D11Buffer> eyeBuffer;
+            check(device->CreateBuffer(&cbDesc, nullptr, &eyeBuffer));
+            auto cb = eyeBuffer.Get();
+            context->GSSetConstantBuffers(0, 1, &cb);
+            context->GSSetShader(geometry.Get(), nullptr, 0);
+            for (UINT samples : {1u, 2u, 4u, 8u}) {
+                auto stereoDesc = td;
+                stereoDesc.ArraySize = 2;
+                stereoDesc.SampleDesc.Count = samples;
+                ComPtr<ID3D11Texture2D> stereo;
+                check(device->CreateTexture2D(&stereoDesc, nullptr, &stereo));
+                ComPtr<ID3D11RenderTargetView> stereoView;
+                check(device->CreateRenderTargetView(stereo.Get(), nullptr, &stereoView));
+                raw = stereoView.Get();
+                for (UINT eye = 0; eye < 2; ++eye) {
+                    UINT value[4]{eye, 0, 0, 0};
+                    context->UpdateSubresource(eyeBuffer.Get(), 0, nullptr, value, 0, 0);
+                    double fine = measure(false, false, false), coarse = measure(true, false, false);
+                    require(coarse < fine * .9, "Both MSAA stereo array slices reduce actual shading work");
+                    // Resolve each slice and verify opaque coverage and unchanged Center.
+                    auto resolvedDesc = td;
+                    ComPtr<ID3D11Texture2D> resolved;
+                    check(device->CreateTexture2D(&resolvedDesc, nullptr, &resolved));
+                    if (samples > 1)
+                        context->ResolveSubresource(resolved.Get(), 0, stereo.Get(), eye, td.Format);
+                    else
+                        context->CopySubresourceRegion(resolved.Get(), 0, 0, 0, 0, stereo.Get(), eye,
+                                                       nullptr);
+                    auto stagingDesc = td;
+                    stagingDesc.BindFlags = 0;
+                    stagingDesc.Usage = D3D11_USAGE_STAGING;
+                    stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+                    ComPtr<ID3D11Texture2D> staging;
+                    check(device->CreateTexture2D(&stagingDesc, nullptr, &staging));
+                    context->CopyResource(staging.Get(), resolved.Get());
+                    D3D11_MAPPED_SUBRESOURCE mapped{};
+                    check(context->Map(staging.Get(), 0, D3D11_MAP_READ, 0, &mapped));
+                    auto pixels = static_cast<uint8_t *>(mapped.pData);
+                    for (UINT y = 0; y < 512; ++y)
+                        for (UINT x = 0; x < 512; ++x)
+                            require(pixels[y * mapped.RowPitch + x * 4 + 3] == 255,
+                                    "MSAA stereo slice opaque coverage");
+                    for (UINT y = 248; y < 264; ++y)
+                        for (UINT x = 248; x < 264; ++x)
+                            for (UINT channel = 0; channel < 4; ++channel)
+                                require(pixels[y * mapped.RowPitch + x * 4 + channel] ==
+                                            baselineCenter[((y - 248) * 16 + x - 248) * 4 + channel],
+                                        "MSAA stereo Center equals baseline");
+                    context->Unmap(staging.Get(), 0);
+                    evidence.back()["stereoSamples"] = samples;
+                    evidence.back()["stereoEye"] = eye;
+                }
+            }
+            context->GSSetShader(nullptr, nullptr, 0);
+            raw = rtv.Get();
+            ComPtr<ID3D11DeviceContext> deferred;
+            check(device->CreateDeferredContext(0, &deferred));
+            deferred->ClearState();
+            ComPtr<ID3D11CommandList> commandList;
+            check(deferred->FinishCommandList(FALSE, &commandList));
+            context->ExecuteCommandList(commandList.Get(), TRUE);
+            require(measure(true, false, false) >= baseline,
+                    "Unknown deferred NVAPI state safely suspends interception");
+            require(automatic.diagnostics()["deferredExecutionsSkipped"] == 1,
+                    "Deferred exclusion is observable");
+            std::filesystem::create_directories("ffr-evidence");
+            std::ofstream("ffr-evidence/automatic-d3d11.json") << evidence.dump(2);
+            context->RSSetViewports(1, &vp);
+        }
         FFRSettings settings;
         settings.enabled = true;
         settings.centerX = settings.centerY = .2f;

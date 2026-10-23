@@ -1,4 +1,4 @@
-# FFR verification — 0.1.8
+# FFR verification — 0.1.9
 
 Run the pinned bootstrap and standard Release build. The automated suite covers CPU projection geometry, asymmetric eyes, streamer baseline, no double crop, inherited profiles, exact Outside VRS tile containment, algorithm persistence and all eleven UI languages.
 
@@ -26,3 +26,11 @@ The user reported FFR working in Toolkit and failing in 0.1.7. Local game logs e
 
 
 On 2026-10-21, an isolated RE3 VR mod launch loaded the 0.1.8 DLL with D3D12 and Virtual Desktop OpenXR. Toolkit was absent from loaded modules. With 80% horizontal/vertical FOV and Blur reconstruction, the corrected backend recorded 46,985 draws and confirmed 46,980 through completed queue fences, with four immutable map builds and no foreign-state skips. Reconstruction reported matching FOVs and no error. The first live attempt exposed RE Engine's MAX/passthrough combiner pair; compatibility was corrected and verified by the real GPU fixture before this capture. The user then confirmed both eyes look correct in the running corrected setup. This is a visual acceptance of this RE3/VDXR/80%-FOV/Blur configuration; game FPS and the remaining live matrix were not measured. See [sanitized live evidence](ffr-018-evidence/re3-live.json).
+
+
+## Automatic D3D11 verification — 0.1.9
+
+The no-cooperation hardware fixture exercises ordinary immediate-context Draw, DrawInstanced and DrawInstancedIndirect calls. It queries real pixel-shader invocations, compares central pixel readback with the disabled baseline, checks partial overlays, disables FFR to prove restoration, preserves an explicit foreign NVAPI scope, accepts single-eye and stereo array views, checks both geometry-shader-selected eye slices at 1x/2x/4x/8x MSAA and suspends processing after a deferred command list. Exactly one map build serves the stable target/profile despite repeated draws. D3D11 debug errors fail the fixture. Live Rumble results are recorded separately; hardware fixtures do not establish headset visuals or FPS.
+
+
+Rumble was launched through the system registration with the 0.1.9 layer, D3D11 and Virtual Desktop OpenXR. Its scene uses 2152x2304 two-eye arrays with 8x MSAA. The corrected automatic path recorded 153,683 draws and confirmed 153,472 by GPU event completion, with one immutable rate map, zero foreign-state skips and no deferred command-list executions. Reconstruction reported matching FOVs and no error. The user confirmed both eyes look correct while checking the running game. Game FPS was not measured. See [sanitized live capture](ffr-019-evidence/rumble-live.json).

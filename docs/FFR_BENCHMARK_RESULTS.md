@@ -1,3 +1,9 @@
+# Automatic D3D11 measurements — 0.1.9
+
+The NVIDIA RTX 4060 fixture renders a 512×512 scene using ordinary immediate-context draws without cooperation calls. FFR disabled measures 262,144 pixel-shader invocations; automatic FFR at 80% FOV measures 89,344 (65.9% fewer). The 8x MSAA stereo fixture measures 146,944 invocations per eye versus 262,144 disabled (43.9% fewer). Instanced and indirect paths are checked independently. Central pixel readbacks match the baseline, a 64×64 partial viewport stays at 4,096 invocations, and disabled FFR restores 262,144. These are workload counts in a controlled GPU fixture, not Rumble FPS. No in-game performance improvement is inferred. Both eye slices at 1x/2x/4x/8x MSAA passed workload, center-pixel equality and opaque-coverage checks. A separate [Rumble live capture](ffr-019-evidence/rumble-live.json) confirms executed draws and user-accepted stereo visuals.
+
+Current raw evidence: [automatic D3D11](ffr-019-evidence/automatic-d3d11.json), [regression execution](ffr-019-evidence/27-tests.txt).
+
 # FFR measurements — 0.1.8
 
 NVIDIA GeForce RTX 4060, Windows x64, D3D12 debug validation enabled. The automatic test uses ordinary direct command-list draws and **makes no cooperation API calls**. Sixteen measured frames follow four warm-up frames. The scene is a 512×768 target with actual pipeline-statistics queries. All values below are measured shader invocations, not modeled quality percentages or headset FPS.

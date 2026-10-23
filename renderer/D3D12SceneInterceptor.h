@@ -1,10 +1,10 @@
 #pragma once
-#include "common/FFR.h"
+#include "ISceneInterceptor.h"
 #include <memory>
 namespace fov {
 // Intercepts only same-device DIRECT scene draws. Maps are immutable GPU resources;
 // foreign VRS state and render passes are left untouched. No application opt-in API.
-class D3D12SceneInterceptor {
+class D3D12SceneInterceptor : public ISceneInterceptor {
     struct Impl;
     std::shared_ptr<Impl> impl;
 

@@ -1,0 +1,88 @@
+{
+  "timestamp": "2026-10-23T14:39:12Z",
+  "status": "Reconstructing",
+  "graphicsApi": "D3D11",
+  "lastError": "",
+  "fovMatched": true,
+  "ffrAutomaticScene": {
+    "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+    "candidateDraws": 153683,
+    "deferredExecutionsSkipped": 0,
+    "drawsExecuted": 153472,
+    "drawsRecorded": 153683,
+    "enabled": true,
+    "executionConfirmedByFence": true,
+    "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+    "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+    "foreignVrsSkipped": 0,
+    "immutableMaps": 1,
+    "installed": true,
+    "lastViewport": [
+      0.0,
+      0.0,
+      2690.0,
+      2880.0
+    ],
+    "mapBuilds": 1,
+    "nvapiStateKnown": true,
+    "observedDraws": 170848,
+    "observedTargets": {
+      "1080x1920 samples=1 mips=1 array=1 view=4 slices=1": 17160,
+      "2152x2304 samples=1 mips=1 array=2 view=5 slices=2": 1607,
+      "2152x2304 samples=8 mips=1 array=2 view=7 slices=1": 152081
+    },
+    "outsideSceneSuppression": false,
+    "reason": "Automatic D3D11 NVAPI scene draws recorded",
+    "targetDimensions": [
+      [
+        2152,
+        2304
+      ]
+    ],
+    "viewportCount": 1
+  },
+  "requestedFov": [
+    [
+      -0.7615483999252319,
+      0.591189444065094,
+      0.6577782034873962,
+      -0.8703009486198425
+    ],
+    [
+      -0.591189444065094,
+      0.7615483999252319,
+      0.6577782034873962,
+      -0.8703009486198425
+    ]
+  ],
+  "submittedFov": [
+    [
+      -0.8726646304130554,
+      0.6981316804885864,
+      0.767944872379303,
+      -0.9773843884468079
+    ],
+    [
+      -0.6981316804885864,
+      0.8726646304130554,
+      0.767944872379303,
+      -0.9773843884468079
+    ]
+  ],
+  "application": "Rumble",
+  "runtime": "Virtual Desktop OpenXR",
+  "layerVersion": "0.1.9",
+  "toolkitLoaded": false,
+  "headsetVisualConfirmed": true,
+  "headsetObservation": "User confirmed both eyes look correct while checking the running automatic D3D11 FFR setup.",
+  "gameFpsMeasured": false,
+  "settings": {
+    "horizontalFov": 0.8,
+    "verticalFov": 0.8,
+    "reconstruction": "blur",
+    "ffrEnabled": true
+  },
+  "sceneLayout": "Two-eye texture arrays, 2152x2304, 8x MSAA",
+  "layerDllSha256": "99efd975c1f3edf3165bdec95813840f7f0307219e10790813e08d0bc31b9bc7",
+  "evidenceScope": "GPU event query completion proves NVAPI-wrapped draws executed. Game shader invocations and FPS were not measured. The observedTargets slices field describes non-MSAA array views; samples=8,array=2 identifies the MSAA stereo target."
+}

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(OpenXRFovExtension VERSION 0.1.8 LANGUAGES C CXX)
+project(OpenXRFovExtension VERSION 0.1.9 LANGUAGES C CXX)
 if(NOT WIN32 OR NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
   message(FATAL_ERROR "Windows x64 is required")
 endif()

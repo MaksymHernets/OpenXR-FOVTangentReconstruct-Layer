@@ -1943,18 +1943,6 @@
     "bn": "হার্ডওয়্যার VRS উপলব্ধ; স্পষ্ট দৃশ্য একীকরণ প্রয়োজন",
     "ko": "하드웨어 VRS 사용 가능; 명시적 장면 통합 필요"
   },
-  "Automatic D3D12 scene interception installed": {
-    "de": "Automatische D3D12-Szenenerfassung installiert",
-    "fr": "Interception automatique de scène D3D12 installée",
-    "es": "Intercepción automática de escena D3D12 instalada",
-    "zh": "已安装自动 D3D12 场景拦截",
-    "ja": "自動 D3D12 シーンフックを導入済み",
-    "ru": "Автоматический перехват сцены D3D12 установлен",
-    "hi": "स्वचालित D3D12 दृश्य इंटरसेप्शन स्थापित",
-    "ar": "تم تثبيت اعتراض مشهد D3D12 التلقائي",
-    "bn": "স্বয়ংক্রিয় D3D12 দৃশ্য ইন্টারসেপশন ইনস্টল করা হয়েছে",
-    "ko": "자동 D3D12 장면 가로채기 설치됨"
-  },
   "Automatic VRS: %1 recorded draws; %2 GPU-executed draws": {
     "de": "Automatisches VRS: %1 aufgezeichnete; %2 GPU-ausgeführte Zeichenaufrufe",
     "fr": "VRS automatique : %1 appels enregistrés ; %2 exécutés par le GPU",
@@ -1966,5 +1954,17 @@
     "ar": "VRS تلقائي: %1 أوامر رسم مسجلة؛ %2 منفذة على GPU",
     "bn": "স্বয়ংক্রিয় VRS: %1 রেকর্ড করা ড্র; %2 GPU-তে সম্পাদিত ড্র",
     "ko": "자동 VRS: 기록된 그리기 %1회; GPU 실행 %2회"
+  },
+  "Automatic scene interception installed": {
+    "de": "Automatische-Szenenerfassung installiert",
+    "fr": "Interception automatique de scène installée",
+    "es": "Intercepción automática de escena instalada",
+    "zh": "已安装自动 场景拦截",
+    "ja": "自動 シーンフックを導入済み",
+    "ru": "Автоматический перехват сцены установлен",
+    "hi": "स्वचालित दृश्य इंटरसेप्शन स्थापित",
+    "ar": "تم تثبيت اعتراض مشهد التلقائي",
+    "bn": "স্বয়ংক্রিয় দৃশ্য ইন্টারসেপশন ইনস্টল করা হয়েছে",
+    "ko": "자동 장면 가로채기 설치됨"
   }
 }

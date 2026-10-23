@@ -1,0 +1,1174 @@
+[
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 0,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 0,
+      "drawsRecorded": 0,
+      "enabled": false,
+      "executionConfirmedByFence": false,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 0,
+      "immutableMaps": 0,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 0,
+      "nvapiStateKnown": true,
+      "observedDraws": 24,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 24
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Waiting for observed projection targets",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": false,
+    "foreignVrs": false,
+    "meanPSInvocations": 262144.0,
+    "partialViewport": false
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 24,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 4,
+      "drawsRecorded": 24,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 0,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 48,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 48
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 89344.0,
+    "partialViewport": false
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 48,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 4,
+      "drawsRecorded": 48,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 0,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 72,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 72
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 1,
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 89344.0,
+    "partialViewport": false
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 72,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 4,
+      "drawsRecorded": 72,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 0,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 96,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 96
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 2,
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 89344.0,
+    "partialViewport": false
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 96,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 4,
+      "drawsRecorded": 72,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 0,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        64.0,
+        64.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 120,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 120
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 4096.0,
+    "partialViewport": true
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 96,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 4,
+      "drawsRecorded": 72,
+      "enabled": false,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 0,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 144,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 144
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": false,
+    "foreignVrs": false,
+    "meanPSInvocations": 262144.0,
+    "partialViewport": false
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 96,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 4,
+      "drawsRecorded": 72,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 168,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Foreign NVAPI state observed; automatic override skipped",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": true,
+    "foreignVrs": true,
+    "meanPSInvocations": 89344.0,
+    "partialViewport": false
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 120,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 4,
+      "drawsRecorded": 96,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 192,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 24
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 89344.0,
+    "partialViewport": false
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 144,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 4,
+      "drawsRecorded": 120,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 216,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 24
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 89344.0,
+    "partialViewport": false
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 144,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 4,
+      "drawsRecorded": 120,
+      "enabled": false,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 240,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 48
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": false,
+    "foreignVrs": false,
+    "meanPSInvocations": 262144.0,
+    "partialViewport": false
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 168,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 128,
+      "drawsRecorded": 144,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 264,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 72
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 89344.0,
+    "partialViewport": false,
+    "stereoEye": 0,
+    "stereoSamples": 1
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 168,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 128,
+      "drawsRecorded": 144,
+      "enabled": false,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 288,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 96
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": false,
+    "foreignVrs": false,
+    "meanPSInvocations": 262144.0,
+    "partialViewport": false
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 192,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 128,
+      "drawsRecorded": 168,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 312,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 120
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 89344.0,
+    "partialViewport": false,
+    "stereoEye": 1,
+    "stereoSamples": 1
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 192,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 128,
+      "drawsRecorded": 168,
+      "enabled": false,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 336,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 120,
+        "512x512 samples=2 mips=1 array=2 view=7 slices=1": 24
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": false,
+    "foreignVrs": false,
+    "meanPSInvocations": 262144.0,
+    "partialViewport": false
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 216,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 128,
+      "drawsRecorded": 192,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 360,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 120,
+        "512x512 samples=2 mips=1 array=2 view=7 slices=1": 48
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 89344.0,
+    "partialViewport": false,
+    "stereoEye": 0,
+    "stereoSamples": 2
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 216,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 128,
+      "drawsRecorded": 192,
+      "enabled": false,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 384,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 120,
+        "512x512 samples=2 mips=1 array=2 view=7 slices=1": 72
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": false,
+    "foreignVrs": false,
+    "meanPSInvocations": 262144.0,
+    "partialViewport": false
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 240,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 128,
+      "drawsRecorded": 216,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 408,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 120,
+        "512x512 samples=2 mips=1 array=2 view=7 slices=1": 96
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 89344.0,
+    "partialViewport": false,
+    "stereoEye": 1,
+    "stereoSamples": 2
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 240,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 128,
+      "drawsRecorded": 216,
+      "enabled": false,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 432,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 120,
+        "512x512 samples=2 mips=1 array=2 view=7 slices=1": 96,
+        "512x512 samples=4 mips=1 array=2 view=7 slices=1": 24
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": false,
+    "foreignVrs": false,
+    "meanPSInvocations": 262144.0,
+    "partialViewport": false
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 264,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 128,
+      "drawsRecorded": 240,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 456,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 120,
+        "512x512 samples=2 mips=1 array=2 view=7 slices=1": 96,
+        "512x512 samples=4 mips=1 array=2 view=7 slices=1": 48
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 89344.0,
+    "partialViewport": false,
+    "stereoEye": 0,
+    "stereoSamples": 4
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 264,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 128,
+      "drawsRecorded": 240,
+      "enabled": false,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 480,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 120,
+        "512x512 samples=2 mips=1 array=2 view=7 slices=1": 96,
+        "512x512 samples=4 mips=1 array=2 view=7 slices=1": 72
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": false,
+    "foreignVrs": false,
+    "meanPSInvocations": 262144.0,
+    "partialViewport": false
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 288,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 256,
+      "drawsRecorded": 264,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 504,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 120,
+        "512x512 samples=2 mips=1 array=2 view=7 slices=1": 96,
+        "512x512 samples=4 mips=1 array=2 view=7 slices=1": 96
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 89344.0,
+    "partialViewport": false,
+    "stereoEye": 1,
+    "stereoSamples": 4
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 288,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 256,
+      "drawsRecorded": 264,
+      "enabled": false,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 528,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 120,
+        "512x512 samples=2 mips=1 array=2 view=7 slices=1": 96,
+        "512x512 samples=4 mips=1 array=2 view=7 slices=1": 96,
+        "512x512 samples=8 mips=1 array=2 view=7 slices=1": 24
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": false,
+    "foreignVrs": false,
+    "meanPSInvocations": 262144.0,
+    "partialViewport": false
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 312,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 256,
+      "drawsRecorded": 288,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 552,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 120,
+        "512x512 samples=2 mips=1 array=2 view=7 slices=1": 96,
+        "512x512 samples=4 mips=1 array=2 view=7 slices=1": 96,
+        "512x512 samples=8 mips=1 array=2 view=7 slices=1": 48
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 146944.0,
+    "partialViewport": false,
+    "stereoEye": 0,
+    "stereoSamples": 8
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 312,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 256,
+      "drawsRecorded": 288,
+      "enabled": false,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 576,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 120,
+        "512x512 samples=2 mips=1 array=2 view=7 slices=1": 96,
+        "512x512 samples=4 mips=1 array=2 view=7 slices=1": 96,
+        "512x512 samples=8 mips=1 array=2 view=7 slices=1": 72
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": false,
+    "foreignVrs": false,
+    "meanPSInvocations": 262144.0,
+    "partialViewport": false
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 336,
+      "deferredExecutionsSkipped": 0,
+      "drawsExecuted": 256,
+      "drawsRecorded": 312,
+      "enabled": true,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": true,
+      "observedDraws": 600,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 168,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 120,
+        "512x512 samples=2 mips=1 array=2 view=7 slices=1": 96,
+        "512x512 samples=4 mips=1 array=2 view=7 slices=1": 96,
+        "512x512 samples=8 mips=1 array=2 view=7 slices=1": 96
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Automatic D3D11 NVAPI scene draws recorded",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 146944.0,
+    "partialViewport": false,
+    "stereoEye": 1,
+    "stereoSamples": 8
+  },
+  {
+    "diagnostics": {
+      "backend": "Automatic D3D11 NVIDIA NVAPI scene interception",
+      "candidateDraws": 336,
+      "deferredExecutionsSkipped": 1,
+      "drawsExecuted": 256,
+      "drawsRecorded": 312,
+      "enabled": false,
+      "executionConfirmedByFence": true,
+      "executionEvidence": "D3D11 GPU event queries, polled without flush on immediate-context draw thread",
+      "eyeMapping": "Conservative union of per-eye centers; packed full targets use per-eye halves",
+      "foreignVrsSkipped": 24,
+      "immutableMaps": 1,
+      "installed": true,
+      "lastViewport": [
+        0.0,
+        0.0,
+        512.0,
+        512.0
+      ],
+      "mapBuilds": 1,
+      "nvapiStateKnown": false,
+      "observedDraws": 624,
+      "observedTargets": {
+        "512x512 samples=1 mips=1 array=1 view=4 slices=1": 192,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=1": 24,
+        "512x512 samples=1 mips=1 array=2 view=5 slices=2": 120,
+        "512x512 samples=2 mips=1 array=2 view=7 slices=1": 96,
+        "512x512 samples=4 mips=1 array=2 view=7 slices=1": 96,
+        "512x512 samples=8 mips=1 array=2 view=7 slices=1": 96
+      },
+      "outsideSceneSuppression": false,
+      "reason": "Deferred command list executed; NVAPI state unknown, automatic path suspended",
+      "targetDimensions": [
+        [
+          512,
+          512
+        ]
+      ],
+      "viewportCount": 1
+    },
+    "drawKind": 0,
+    "enabled": true,
+    "foreignVrs": false,
+    "meanPSInvocations": 262144.0,
+    "partialViewport": false
+  }
+]

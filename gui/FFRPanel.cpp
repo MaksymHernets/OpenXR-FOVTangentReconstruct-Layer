@@ -276,7 +276,7 @@ void FFRPanel::updateView() {
                                : hardware
                                    ? (c.value("integrationRequired", true)
                                           ? "Hardware VRS available; explicit scene integration required"
-                                          : "Automatic D3D12 scene interception installed")
+                                          : "Automatic scene interception installed")
                                    : "Hardware FFR unsupported for the current integration") +
                      "\n" + rates);
     support->setText(support->text() + "\n" +
